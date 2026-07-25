@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wavelength</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1><span class="logo-mark">))) </span>Wavelength</h1>
+    <p class="room-code" id="room-code-display" hidden></p>
+    <button id="btn-leave-room" type="button" class="leave-link" hidden>Leave Room</button>
+  </header>
+
+  <main id="app">
+    <section id="view-landing" class="view">
+      <p class="tagline">A cooperative party game about reading each other's minds. One player sees a hidden target on a dial — everyone else has to guess where it is.</p>
+      <form id="form-landing">
+        <label>
+          Your name
+          <input id="input-name" type="text" maxlength="20" required autocomplete="off" placeholder="e.g. Beam" />
+        </label>
+        <p id="landing-join-row" class="hint" hidden>Joining room <strong id="landing-room-code"></strong></p>
+        <button type="submit" id="btn-primary-action">Create Room</button>
+      </form>
+
+      <div id="landing-join-alt" class="join-alt">
+        <div class="divider">or join with a code</div>
+        <label>
+          Room code
+          <input id="input-room-code" type="text" maxlength="6" autocomplete="off" placeholder="ABCDE" style="text-transform:uppercase" />
+        </label>
+        <button type="button" id="btn-join-room">Join Room</button>
+      </div>
+
+      <p class="error-text" id="landing-error" hidden></p>
+    </section>
+
+    <section id="view-lobby" class="view" hidden>
+      <h2>Lobby</h2>
+      <p>Share this link to invite friends:</p>
+      <div class="share-row">
+        <input id="share-link" type="text" readonly />
+        <button id="btn-copy-link" type="button">Copy</button>
+      </div>
+      <ul id="player-list" class="player-list"></ul>
+      <label>
+        Rounds
+        <select id="select-total-rounds">
+          <option value="3">3 rounds</option>
+          <option value="5" selected>5 rounds (standard)</option>
+          <option value="7">7 rounds</option>
+          <option value="10">10 rounds</option>
+        </select>
+      </label>
+      <p id="lobby-hint" class="hint"></p>
+      <button id="btn-start-game" type="button" hidden>Start Game</button>
+    </section>
+
+    <section id="view-clue-reveal" class="view" hidden>
+      <p class="round-heading" id="clue-round-heading"></p>
+      <div id="clue-spectrum-bar" class="spectrum-bar"></div>
+
+      <div id="clue-giver-form">
+        <p class="hint">Only you can see the target. Give one word to point the group toward it.</p>
+        <form id="form-clue">
+          <label>
+            Your clue
+            <input id="input-clue" type="text" maxlength="40" required autocomplete="off" placeholder="e.g. Interstellar" />
+          </label>
+          <button type="submit" id="btn-submit-clue">Submit Clue</button>
+        </form>
+      </div>
+
+      <div id="clue-waiting" class="waiting-block" hidden>
+        <div class="pulse-dot"></div>
+        <p id="clue-waiting-text" class="hint"></p>
+      </div>
+    </section>
+
+    <section id="view-guessing" class="view" hidden>
+      <div id="guessing-spectrum-bar" class="spectrum-bar"></div>
+      <p class="clue-quote" id="guessing-clue-text"></p>
+
+      <div id="guesser-controls">
+        <p class="hint">Talk it out, then drag the dial together and lock it in.</p>
+        <input id="guess-slider" type="range" min="0" max="1000" value="500" class="dial-slider" />
+        <button id="btn-lock-guess" type="button">Lock In Guess</button>
+      </div>
+
+      <div id="guessing-waiting-block" class="waiting-block">
+        <div class="pulse-dot"></div>
+        <p id="guessing-waiting-text" class="hint"></p>
+      </div>
+
+      <button id="btn-reveal-round" type="button" hidden>Reveal the Target</button>
+    </section>
+
+    <section id="view-round-reveal" class="view" hidden>
+      <div id="round-reveal-spectrum-bar" class="spectrum-bar"></div>
+      <p class="clue-quote" id="round-reveal-clue"></p>
+      <p class="points-banner" id="round-reveal-points"></p>
+      <p class="hint" id="round-reveal-total"></p>
+      <button id="btn-continue-round" type="button" hidden>Next Round</button>
+    </section>
+
+    <section id="view-game-summary" class="view" hidden>
+      <h2>Final Score</h2>
+      <p class="summary-total" id="summary-total"></p>
+      <p class="summary-flavor" id="summary-flavor"></p>
+      <ul id="summary-round-list" class="summary-round-list"></ul>
+      <button id="btn-play-again" type="button" hidden>Play Again</button>
+    </section>
+  </main>
+
+  <p id="toast" class="toast" hidden></p>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

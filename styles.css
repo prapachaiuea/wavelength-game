@@ -1,0 +1,510 @@
+:root {
+  color-scheme: dark;
+  --bg: #10171a;
+  --surface: #172226;
+  --surface-alt: #1f2e33;
+  --text: #f2f6f5;
+  --text-muted: #93a5a3;
+  --accent: #ff7a45;
+  --accent-soft: rgba(255, 122, 69, 0.16);
+  --target: #ffd166;
+  --target-soft: rgba(255, 209, 102, 0.18);
+  --win: #4cd9a0;
+  --win-soft: rgba(76, 217, 160, 0.16);
+  --lose: #ff6b6b;
+  --border: #24343a;
+  --radius: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.app-header {
+  width: 100%;
+  max-width: 480px;
+  padding: 1.5rem 1.25rem 0;
+  text-align: center;
+}
+
+.app-header h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.logo-mark {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.room-code {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  margin-top: 0.3rem;
+}
+
+.leave-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4rem 0;
+  text-decoration: underline;
+  margin-top: 0.15rem;
+}
+
+.leave-link:hover:not(:disabled) {
+  color: var(--lose);
+  opacity: 1;
+}
+
+#app {
+  width: 100%;
+  max-width: 480px;
+  padding: 1rem 1.25rem 3rem;
+}
+
+.view {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.view[hidden] {
+  display: none;
+}
+
+.view h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.tagline {
+  color: var(--text-muted);
+  margin: 0 0 0.25rem;
+  line-height: 1.5;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+input[type="text"] {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+input[type="text"]:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+select {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+select:disabled {
+  opacity: 0.6;
+}
+
+button {
+  background: var(--accent);
+  color: #1a0f08;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+#btn-copy-link {
+  background: var(--surface-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.join-alt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.divider {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  position: relative;
+}
+
+.error-text {
+  color: var(--lose);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.hint {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+  text-align: center;
+}
+
+.share-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.share-row input {
+  flex: 1;
+}
+
+.player-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.player-chip {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.95rem;
+}
+
+.player-chip.offline {
+  opacity: 0.5;
+}
+
+/* Round heading / clue quote / points banner — small typographic "personality" moments */
+
+.round-heading {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.clue-quote {
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0.25rem 0 0.25rem;
+  line-height: 1.35;
+}
+
+.clue-quote:not(:empty)::before,
+.clue-quote:not(:empty)::after {
+  content: '"';
+  color: var(--accent);
+}
+
+.points-banner {
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--win);
+  margin: 0.25rem 0 0;
+}
+
+/* Spectrum bar — the centerpiece: two end labels + a dial track with position markers. */
+
+.spectrum-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.spectrum-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.spectrum-label {
+  flex: 1;
+}
+
+.spectrum-label-left {
+  text-align: left;
+}
+
+.spectrum-label-right {
+  text-align: right;
+}
+
+.spectrum-track {
+  position: relative;
+  height: 64px;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.spectrum-track::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 10px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--surface-alt), var(--accent-soft) 50%, var(--surface-alt));
+  border: 1px solid var(--border);
+}
+
+.spectrum-marker {
+  position: absolute;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.marker-target {
+  background: var(--target);
+  box-shadow: 0 0 0 4px var(--target-soft), 0 0 18px rgba(255, 209, 102, 0.5);
+}
+
+.marker-pointer {
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.marker-pointer.marker-locked {
+  background: var(--win);
+  box-shadow: 0 0 0 4px var(--win-soft), 0 0 18px rgba(76, 217, 160, 0.45);
+}
+
+.spectrum-marker-label {
+  position: absolute;
+  bottom: 135%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.marker-target .spectrum-marker-label {
+  color: var(--target);
+  border-color: rgba(255, 209, 102, 0.4);
+}
+
+.marker-pointer .spectrum-marker-label {
+  color: var(--accent);
+  border-color: rgba(255, 122, 69, 0.4);
+}
+
+.marker-locked .spectrum-marker-label {
+  color: var(--win);
+  border-color: rgba(76, 217, 160, 0.4);
+}
+
+/* Dial slider — custom range input styling so it reads as a tactile tuner, not a default input */
+
+.dial-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--surface-alt), var(--accent-soft) 50%, var(--surface-alt));
+  border: 1px solid var(--border);
+  margin: 0.75rem 0;
+  outline: none;
+}
+
+.dial-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--bg);
+  box-shadow: 0 0 0 4px var(--accent-soft), 0 2px 10px rgba(0, 0, 0, 0.45);
+  cursor: grab;
+}
+
+.dial-slider::-moz-range-thumb {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--bg);
+  box-shadow: 0 0 0 4px var(--accent-soft), 0 2px 10px rgba(0, 0, 0, 0.45);
+  cursor: grab;
+}
+
+.dial-slider:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+.dial-slider:disabled::-webkit-slider-thumb {
+  background: var(--win);
+  cursor: default;
+}
+
+.dial-slider:disabled::-moz-range-thumb {
+  background: var(--win);
+  cursor: default;
+}
+
+.dial-slider:disabled {
+  opacity: 0.9;
+}
+
+/* Waiting state — a soft pulsing dot while a round is blocked on someone else's action */
+
+.waiting-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 0;
+}
+
+.pulse-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.55; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+/* Game summary */
+
+.summary-total {
+  text-align: center;
+  font-size: 3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  margin: 0.25rem 0 0;
+  color: var(--accent);
+}
+
+.summary-flavor {
+  text-align: center;
+  color: var(--text-muted);
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.summary-round-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summary-round-row {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.65rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.toast-error {
+  border-color: var(--lose);
+  color: var(--lose);
+}
