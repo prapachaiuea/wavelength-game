@@ -53,7 +53,7 @@ export function render(state) {
   if (state.phase !== "guessing") return;
 
   const pub = state.public || {};
-  const spectrum = spectrums[pub.spectrumId] || ["?", "?"];
+  const spectrum = spectrums[pub.spectrumId] || { left: ["?", "?"], right: ["?", "?"] };
   const isClueGiver = state.uid === pub.clueGiverUid;
   const pointer = pub.pointer || { position: 500, locked: false };
 
@@ -68,7 +68,7 @@ export function render(state) {
   });
 
   const barEl = document.getElementById("guessing-spectrum-bar");
-  renderSpectrumBar(barEl, { left: spectrum[0], right: spectrum[1], markers });
+  renderSpectrumBar(barEl, { left: spectrum.left, right: spectrum.right, markers });
 
   document.getElementById("guessing-clue-text").textContent = pub.clue || "";
 

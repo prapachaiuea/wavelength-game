@@ -34,7 +34,7 @@ export function render(state) {
   if (state.phase !== "clue-reveal") return;
 
   const pub = state.public || {};
-  const spectrum = spectrums[pub.spectrumId] || ["?", "?"];
+  const spectrum = spectrums[pub.spectrumId] || { left: ["?", "?"], right: ["?", "?"] };
   const isClueGiver = state.uid === pub.clueGiverUid;
   const clueGiverName = state.players?.[pub.clueGiverUid]?.name || "someone";
 
@@ -42,7 +42,7 @@ export function render(state) {
   const markers = isClueGiver && state.mySecret
     ? [{ position: state.mySecret.targetPosition, className: "marker-target", label: "Target" }]
     : [];
-  renderSpectrumBar(barEl, { left: spectrum[0], right: spectrum[1], markers });
+  renderSpectrumBar(barEl, { left: spectrum.left, right: spectrum.right, markers });
 
   const giverForm = document.getElementById("clue-giver-form");
   const waiting = document.getElementById("clue-waiting");

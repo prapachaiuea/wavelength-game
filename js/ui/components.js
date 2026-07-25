@@ -1,5 +1,23 @@
-// Renders a spectrum bar into `container`: two end labels plus zero or more absolutely
-// positioned markers (target, live pointer, locked pointer). `markers` is
+// `left`/`right` are [english, thai] pairs — rendered as a two-line bilingual label.
+function buildSpectrumLabel(pair, sideClass) {
+  const el = document.createElement("div");
+  el.className = `spectrum-label ${sideClass}`;
+  const en = document.createElement("span");
+  en.className = "spectrum-label-en";
+  en.textContent = Array.isArray(pair) ? pair[0] : pair;
+  el.appendChild(en);
+  const th = Array.isArray(pair) ? pair[1] : null;
+  if (th) {
+    const thEl = document.createElement("span");
+    thEl.className = "spectrum-label-th";
+    thEl.textContent = th;
+    el.appendChild(thEl);
+  }
+  return el;
+}
+
+// Renders a spectrum bar into `container`: two bilingual end labels plus zero or more
+// absolutely positioned markers (target, live pointer, locked pointer). `markers` is
 // [{ position /* 0-1000 */, className, label }]. Shared by clue/guessing/round-reveal views
 // so the visual language (bar, marker dot, position math) stays identical across phases.
 export function renderSpectrumBar(container, { left, right, markers = [] }) {
@@ -7,12 +25,8 @@ export function renderSpectrumBar(container, { left, right, markers = [] }) {
 
   const labels = document.createElement("div");
   labels.className = "spectrum-labels";
-  const leftLabel = document.createElement("span");
-  leftLabel.className = "spectrum-label spectrum-label-left";
-  leftLabel.textContent = left;
-  const rightLabel = document.createElement("span");
-  rightLabel.className = "spectrum-label spectrum-label-right";
-  rightLabel.textContent = right;
+  const leftLabel = buildSpectrumLabel(left, "spectrum-label-left");
+  const rightLabel = buildSpectrumLabel(right, "spectrum-label-right");
   labels.append(leftLabel, rightLabel);
 
   const track = document.createElement("div");

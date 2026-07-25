@@ -33,14 +33,14 @@ export function render(state) {
   const round = (state.rounds || {})[pub.roundNumber];
   if (!round) return; // rounds/{n} hasn't synced to this tab yet — next render() will pick it up
 
-  const spectrum = spectrums[round.spectrumId] || ["?", "?"];
+  const spectrum = spectrums[round.spectrumId] || { left: ["?", "?"], right: ["?", "?"] };
   const clueGiverName = state.players?.[round.clueGiverUid]?.name || "someone";
   const { points, label } = computeScore(round.targetPosition, round.lockedPosition);
 
   const barEl = document.getElementById("round-reveal-spectrum-bar");
   renderSpectrumBar(barEl, {
-    left: spectrum[0],
-    right: spectrum[1],
+    left: spectrum.left,
+    right: spectrum.right,
     markers: [
       { position: round.targetPosition, className: "marker-target", label: "Target" },
       { position: round.lockedPosition, className: "marker-pointer marker-locked", label: "Guess" },

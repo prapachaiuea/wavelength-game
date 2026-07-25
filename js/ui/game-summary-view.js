@@ -45,9 +45,9 @@ export function render(state) {
     const li = document.createElement("li");
     li.className = "summary-round-row";
     if (round) {
-      const spectrum = spectrums[round.spectrumId] || ["?", "?"];
+      const spectrum = spectrums[round.spectrumId] || { left: ["?", "?"], right: ["?", "?"] };
       const giverName = state.players?.[round.clueGiverUid]?.name || "someone";
-      li.textContent = `Round ${n}: ${spectrum[0]} ↔ ${spectrum[1]} — "${round.clue}" (${giverName}) — +${round.points}`;
+      li.textContent = `Round ${n}: ${spectrum.left[0]} (${spectrum.left[1]}) ↔ ${spectrum.right[0]} (${spectrum.right[1]}) — "${round.clue}" (${giverName}) — +${round.points}`;
     } else {
       li.textContent = `Round ${n}: —`;
     }

@@ -279,22 +279,37 @@ button:disabled {
 .spectrum-labels {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 0.75rem;
+}
+
+.spectrum-label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.spectrum-label-left {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.spectrum-label-right {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.spectrum-label-en {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text);
 }
 
-.spectrum-label {
-  flex: 1;
-}
-
-.spectrum-label-left {
-  text-align: left;
-}
-
-.spectrum-label-right {
-  text-align: right;
+.spectrum-label-th {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 .spectrum-track {
