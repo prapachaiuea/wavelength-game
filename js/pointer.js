@@ -1,11 +1,13 @@
 import { ref, update } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 import { db } from "./firebase-init.js";
 import { getState } from "./state.js";
+import { showToast } from "./ui/components.js";
 
 const WRITE_THROTTLE_MS = 100;
 let lastWriteAt = 0;
 let pendingTimeout = null;
 let dragging = false;
+let warnedThisDrag = false;
 
 // Consulted by guessing-view.js to suppress re-rendering the slider's DOM value from
 // incoming remote snapshots while THIS tab's user has a finger/mouse on it — prevents the
@@ -16,16 +18,28 @@ export function isDragging() {
 
 export function beginDrag() {
   dragging = true;
+  warnedThisDrag = false;
 }
 
+// Previously had no error handling at all: a rejected write (e.g. permission denied) failed
+// completely silently, so a broken drag looked identical to "nothing happens" with no signal
+// to debug from. Now surfaces at most one toast per drag gesture, not one per throttled write.
 async function writePointer(roomId, position) {
   const { uid } = getState();
   lastWriteAt = Date.now();
-  await update(ref(db, `wavelength/${roomId}/public/pointer`), {
-    position,
-    movedBy: uid,
-    movedAt: Date.now(),
-  });
+  try {
+    await update(ref(db, `wavelength/${roomId}/public/pointer`), {
+      position,
+      movedBy: uid,
+      movedAt: Date.now(),
+    });
+  } catch (err) {
+    console.error("Failed to write pointer position:", err);
+    if (!warnedThisDrag) {
+      warnedThisDrag = true;
+      showToast("Could not move the dial — check your connection.", true);
+    }
+  }
 }
 
 // Throttled to ~WRITE_THROTTLE_MS during active dragging to stay well within Spark-plan

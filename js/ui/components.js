@@ -44,7 +44,16 @@ export function renderSpectrumBar(container, { left, right, markers = [] }) {
     track.appendChild(marker);
   });
 
-  container.append(labels, track);
+  const scale = document.createElement("div");
+  scale.className = "spectrum-scale";
+  for (let i = 0; i <= 10; i++) {
+    const tick = document.createElement("span");
+    tick.className = "spectrum-scale-tick";
+    tick.textContent = String(i);
+    scale.appendChild(tick);
+  }
+
+  container.append(labels, track, scale);
 }
 
 let toastTimeout = null;

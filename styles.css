@@ -357,6 +357,22 @@ button:disabled {
   box-shadow: 0 0 0 4px var(--win-soft), 0 0 18px rgba(76, 217, 160, 0.45);
 }
 
+.spectrum-scale {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+  margin-top: -0.35rem;
+}
+
+.spectrum-scale-tick {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  width: 1.2em;
+  text-align: center;
+}
+
 .spectrum-marker-label {
   position: absolute;
   bottom: 135%;
