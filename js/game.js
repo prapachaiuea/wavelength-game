@@ -5,6 +5,7 @@ import { computeScore } from "./scoring.js";
 import { loadSpectrums } from "./utils/spectrums.js";
 
 export const MIN_PLAYERS = 3;
+export const MIN_PLAYERS_COMPETITIVE = 4;
 export const MAX_PLAYERS = 10;
 export const DEFAULT_TOTAL_ROUNDS = 5;
 export const POSITION_MAX = 1000;
@@ -20,6 +21,14 @@ export async function setTotalRounds(roomId, totalRounds) {
   await update(ref(db, `wavelength/${roomId}/public`), { totalRounds });
 }
 
+export async function setMode(roomId, mode) {
+  await update(ref(db, `wavelength/${roomId}/public`), { mode });
+}
+
+export async function setTeam(roomId, uid, team) {
+  await update(ref(db, `wavelength/${roomId}/public/teams`), { [uid]: team });
+}
+
 // Host-only: rotates the clue-giver and picks a fresh spectrum + secret target entirely
 // client-side (no trusted server on the free Firebase plan — same host-trust limitation as
 // Insider, documented in README.md). Safe as one atomic multi-path update because every
@@ -27,9 +36,21 @@ export async function setTotalRounds(roomId, totalRounds) {
 // firebase-rules.json notes on the two-step-write lesson learned from Insider's votes bug).
 async function advanceRound(roomId) {
   const { public: pub } = getState();
-  const clueGiverOrder = pub.clueGiverOrder || [];
   const roundNumber = (pub.roundNumber || 0) + 1;
-  const clueGiverUid = clueGiverOrder[(roundNumber - 1) % clueGiverOrder.length];
+  const isCompetitive = pub.mode === "competitive";
+
+  let clueGiverUid;
+  let activeTeam = null;
+  if (isCompetitive) {
+    activeTeam = roundNumber % 2 === 1 ? "A" : "B";
+    const teamOrder = (activeTeam === "A" ? pub.teamAOrder : pub.teamBOrder) || [];
+    const turnIndex = Math.floor((roundNumber - 1) / 2);
+    clueGiverUid = teamOrder[turnIndex % teamOrder.length];
+  } else {
+    const clueGiverOrder = pub.clueGiverOrder || [];
+    clueGiverUid = clueGiverOrder[(roundNumber - 1) % clueGiverOrder.length];
+  }
+
   const spectrums = await loadSpectrums();
   const spectrumId = Math.floor(Math.random() * spectrums.length);
   const targetPosition = randomTarget();
@@ -38,6 +59,7 @@ async function advanceRound(roomId) {
   updates[`wavelength/${roomId}/secrets/${clueGiverUid}`] = { targetPosition };
   updates[`wavelength/${roomId}/public/roundNumber`] = roundNumber;
   updates[`wavelength/${roomId}/public/clueGiverUid`] = clueGiverUid;
+  updates[`wavelength/${roomId}/public/activeTeam`] = activeTeam;
   updates[`wavelength/${roomId}/public/spectrumId`] = spectrumId;
   updates[`wavelength/${roomId}/public/clue`] = null;
   updates[`wavelength/${roomId}/public/pointer`] = {
@@ -54,18 +76,39 @@ async function advanceRound(roomId) {
 export async function startGame(roomId) {
   const { players, public: pub } = getState();
   const uids = Object.keys(players);
-  if (uids.length < MIN_PLAYERS) throw new Error("NOT_ENOUGH_PLAYERS");
-  if (uids.length > MAX_PLAYERS) throw new Error("TOO_MANY_PLAYERS");
+  const isCompetitive = pub?.mode === "competitive";
 
-  const clueGiverOrder = [...uids].sort(
-    (a, b) => (players[a].joinedAt || 0) - (players[b].joinedAt || 0)
-  );
+  if (isCompetitive) {
+    const teams = pub?.teams || {};
+    const teamA = uids.filter((uid) => teams[uid] === "A");
+    const teamB = uids.filter((uid) => teams[uid] === "B");
+    if (teamA.length + teamB.length !== uids.length) throw new Error("UNASSIGNED_PLAYERS");
+    if (teamA.length < 2 || teamB.length < 2) throw new Error("TEAM_TOO_SMALL");
 
-  await update(ref(db, `wavelength/${roomId}/public`), {
-    clueGiverOrder,
-    totalRounds: pub?.totalRounds || DEFAULT_TOTAL_ROUNDS,
-    roundNumber: 0,
-  });
+    const byJoined = (a, b) => (players[a].joinedAt || 0) - (players[b].joinedAt || 0);
+    const teamAOrder = [...teamA].sort(byJoined);
+    const teamBOrder = [...teamB].sort(byJoined);
+
+    await update(ref(db, `wavelength/${roomId}/public`), {
+      teamAOrder,
+      teamBOrder,
+      totalRounds: pub?.totalRounds || DEFAULT_TOTAL_ROUNDS,
+      roundNumber: 0,
+    });
+  } else {
+    if (uids.length < MIN_PLAYERS) throw new Error("NOT_ENOUGH_PLAYERS");
+    if (uids.length > MAX_PLAYERS) throw new Error("TOO_MANY_PLAYERS");
+
+    const clueGiverOrder = [...uids].sort(
+      (a, b) => (players[a].joinedAt || 0) - (players[b].joinedAt || 0)
+    );
+
+    await update(ref(db, `wavelength/${roomId}/public`), {
+      clueGiverOrder,
+      totalRounds: pub?.totalRounds || DEFAULT_TOTAL_ROUNDS,
+      roundNumber: 0,
+    });
+  }
 
   await advanceRound(roomId);
 }
@@ -91,6 +134,7 @@ export async function revealRound(roomId) {
   await update(ref(db, `wavelength/${roomId}/rounds/${pub.roundNumber}`), {
     spectrumId: pub.spectrumId,
     clueGiverUid: pub.clueGiverUid,
+    team: pub.mode === "competitive" ? pub.activeTeam : null,
     clue: pub.clue,
     targetPosition,
     lockedPosition,
@@ -118,6 +162,9 @@ export async function backToLobby(roomId) {
   updates[`wavelength/${roomId}/public/clue`] = null;
   updates[`wavelength/${roomId}/public/clueGiverUid`] = null;
   updates[`wavelength/${roomId}/public/clueGiverOrder`] = null;
+  updates[`wavelength/${roomId}/public/teamAOrder`] = null;
+  updates[`wavelength/${roomId}/public/teamBOrder`] = null;
+  updates[`wavelength/${roomId}/public/activeTeam`] = null;
   updates[`wavelength/${roomId}/public/spectrumId`] = null;
   updates[`wavelength/${roomId}/public/pointer`] = null;
   updates[`wavelength/${roomId}/public/roundNumber`] = 0;

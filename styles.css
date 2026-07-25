@@ -233,6 +233,92 @@ button:disabled {
   opacity: 0.5;
 }
 
+.s-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0.25rem 0 -0.35rem;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mode-btn {
+  flex: 1;
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.mode-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.team-assign {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.team-assign-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.team-assign-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+}
+
+.team-assign-name {
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.team-btn-group {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.team-btn {
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.4rem 0.65rem;
+}
+
+.team-btn-A.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.team-btn-B.active {
+  background: var(--target-soft);
+  color: var(--target);
+  border-color: var(--target);
+}
+
 /* Round heading / clue quote / points banner — small typographic "personality" moments */
 
 .round-heading {
@@ -467,6 +553,56 @@ button:disabled {
   align-items: center;
   gap: 0.6rem;
   padding: 1rem 0;
+}
+
+.minigame {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.minigame-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.minigame-score {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+.minigame-field {
+  position: relative;
+  height: 160px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.minigame-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--accent), var(--target));
+  border: none;
+  box-shadow: 0 0 12px rgba(255, 122, 69, 0.5);
+  padding: 0;
+  cursor: pointer;
+  animation: bubble-in 0.15s ease;
+}
+
+.minigame-bubble:active {
+  transform: scale(0.85);
+}
+
+@keyframes bubble-in {
+  from { transform: scale(0.3); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 .pulse-dot {

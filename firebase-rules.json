@@ -77,6 +77,21 @@
           "clueGiverUid": {
             ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
           },
+          "mode": {
+            ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
+          },
+          "teams": {
+            ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
+          },
+          "teamAOrder": {
+            ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
+          },
+          "teamBOrder": {
+            ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
+          },
+          "activeTeam": {
+            ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
+          },
           "spectrumId": {
             ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
           },
@@ -84,7 +99,7 @@
             ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && root.child('wavelength').child($roomId).child('public/phase').val() === 'clue-reveal'))"
           },
           "pointer": {
-            ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (root.child('wavelength').child($roomId).child('players').child(auth.uid).exists() && auth.uid !== root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && root.child('wavelength').child($roomId).child('public/phase').val() === 'guessing'))"
+            ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (root.child('wavelength').child($roomId).child('players').child(auth.uid).exists() && auth.uid !== root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && root.child('wavelength').child($roomId).child('public/phase').val() === 'guessing' && (root.child('wavelength').child($roomId).child('public/mode').val() !== 'competitive' || root.child('wavelength').child($roomId).child('public/teams').child(auth.uid).val() === root.child('wavelength').child($roomId).child('public/activeTeam').val())))"
           },
           "phase": {
             ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && data.val() === 'clue-reveal' && newData.val() === 'guessing' && root.child('wavelength').child($roomId).child('public/clue').exists()) || (auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && data.val() === 'guessing' && newData.val() === 'round-reveal' && root.child('wavelength').child($roomId).child('public/pointer/locked').val() === true))"

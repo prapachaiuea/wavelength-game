@@ -45,6 +45,19 @@
         <button id="btn-copy-link" type="button">Copy</button>
       </div>
       <ul id="player-list" class="player-list"></ul>
+
+      <div class="s-label">Game Mode</div>
+      <div class="mode-toggle" id="mode-toggle">
+        <button type="button" class="mode-btn" id="mode-btn-cooperative" data-mode="cooperative">Cooperative</button>
+        <button type="button" class="mode-btn" id="mode-btn-competitive" data-mode="competitive">Competitive</button>
+      </div>
+
+      <div id="team-assign" class="team-assign" hidden>
+        <div class="s-label">Teams</div>
+        <ul id="team-assign-list" class="team-assign-list"></ul>
+        <p class="hint">Each team needs at least 2 players.</p>
+      </div>
+
       <label>
         Rounds
         <select id="select-total-rounds">
@@ -76,6 +89,7 @@
       <div id="clue-waiting" class="waiting-block" hidden>
         <div class="pulse-dot"></div>
         <p id="clue-waiting-text" class="hint"></p>
+        <div id="waiting-minigame" class="minigame"></div>
       </div>
     </section>
 

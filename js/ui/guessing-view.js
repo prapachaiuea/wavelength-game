@@ -56,6 +56,9 @@ export function render(state) {
   const spectrum = spectrums[pub.spectrumId] || { left: ["?", "?"], right: ["?", "?"] };
   const isClueGiver = state.uid === pub.clueGiverUid;
   const pointer = pub.pointer || { position: 500, locked: false };
+  const isCompetitive = pub.mode === "competitive";
+  const myTeam = pub.teams?.[state.uid];
+  const isSpectatingTeam = isCompetitive && !isClueGiver && myTeam !== pub.activeTeam;
 
   const markers = [];
   if (isClueGiver && state.mySecret) {
@@ -87,6 +90,11 @@ export function render(state) {
     waitingBlock.hidden = pointer.locked;
     document.getElementById("guessing-waiting-text").textContent =
       "Waiting for the group to lock in a guess...";
+  } else if (isSpectatingTeam) {
+    guesserControls.hidden = true;
+    waitingBlock.hidden = false;
+    document.getElementById("guessing-waiting-text").textContent =
+      `Team ${pub.activeTeam} is guessing this round — you're up next.`;
   } else {
     guesserControls.hidden = false;
     waitingBlock.hidden = true;

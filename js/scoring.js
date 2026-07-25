@@ -17,6 +17,18 @@ export function maxPossibleScore(totalRounds) {
   return 4 * totalRounds;
 }
 
+// Competitive mode: each round record carries which team was on offense (`team: 'A'|'B'`),
+// so team totals are derived the same race-free way as the cooperative running total.
+export function sumTeamScores(rounds) {
+  let scoreA = 0;
+  let scoreB = 0;
+  Object.values(rounds || {}).forEach((r) => {
+    if (r.team === "A") scoreA += r.points || 0;
+    else if (r.team === "B") scoreB += r.points || 0;
+  });
+  return { scoreA, scoreB };
+}
+
 const FLAVOR_BANDS = [
   { minPct: 0.9, text: "Telepathic — you're basically one brain." },
   { minPct: 0.75, text: "In Sync — great wavelength connection." },

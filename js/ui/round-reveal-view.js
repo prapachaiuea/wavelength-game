@@ -1,6 +1,6 @@
 import { getState } from "../state.js";
 import { nextRoundOrSummary } from "../game.js";
-import { computeScore, maxPossibleScore } from "../scoring.js";
+import { computeScore, maxPossibleScore, sumTeamScores } from "../scoring.js";
 import { loadSpectrums } from "../utils/spectrums.js";
 import { renderSpectrumBar, showToast } from "./components.js";
 
@@ -48,11 +48,17 @@ export function render(state) {
   });
 
   document.getElementById("round-reveal-clue").textContent = `"${round.clue}" — ${clueGiverName}`;
-  document.getElementById("round-reveal-points").textContent = `+${points} points — ${label}`;
+  const pointsLabel = pub.mode === "competitive" ? `Team ${round.team}: +${points} points — ${label}` : `+${points} points — ${label}`;
+  document.getElementById("round-reveal-points").textContent = pointsLabel;
 
-  const total = Object.values(state.rounds || {}).reduce((sum, r) => sum + (r.points || 0), 0);
-  document.getElementById("round-reveal-total").textContent =
-    `Total: ${total} / ${maxPossibleScore(pub.roundNumber)}`;
+  const totalEl = document.getElementById("round-reveal-total");
+  if (pub.mode === "competitive") {
+    const { scoreA, scoreB } = sumTeamScores(state.rounds);
+    totalEl.textContent = `Team A: ${scoreA}  ·  Team B: ${scoreB}`;
+  } else {
+    const total = Object.values(state.rounds || {}).reduce((sum, r) => sum + (r.points || 0), 0);
+    totalEl.textContent = `Total: ${total} / ${maxPossibleScore(pub.roundNumber)}`;
+  }
 
   const btnContinue = document.getElementById("btn-continue-round");
   btnContinue.hidden = !state.isHost;

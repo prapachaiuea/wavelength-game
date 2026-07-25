@@ -1,6 +1,6 @@
 import { getState } from "../state.js";
 import { backToLobby } from "../game.js";
-import { maxPossibleScore, flavorText } from "../scoring.js";
+import { maxPossibleScore, flavorText, sumTeamScores } from "../scoring.js";
 import { loadSpectrums } from "../utils/spectrums.js";
 import { showToast } from "./components.js";
 
@@ -32,11 +32,19 @@ export function render(state) {
   const pub = state.public || {};
   const rounds = state.rounds || {};
   const totalRounds = pub.totalRounds || Object.keys(rounds).length;
-  const total = Object.values(rounds).reduce((sum, r) => sum + (r.points || 0), 0);
-  const max = maxPossibleScore(totalRounds);
+  const isCompetitive = pub.mode === "competitive";
 
-  document.getElementById("summary-total").textContent = `${total} / ${max}`;
-  document.getElementById("summary-flavor").textContent = flavorText(total, totalRounds);
+  if (isCompetitive) {
+    const { scoreA, scoreB } = sumTeamScores(rounds);
+    document.getElementById("summary-total").textContent = `Team A ${scoreA} — ${scoreB} Team B`;
+    const flavor = scoreA === scoreB ? "It's a tie!" : scoreA > scoreB ? "Team A wins!" : "Team B wins!";
+    document.getElementById("summary-flavor").textContent = flavor;
+  } else {
+    const total = Object.values(rounds).reduce((sum, r) => sum + (r.points || 0), 0);
+    const max = maxPossibleScore(totalRounds);
+    document.getElementById("summary-total").textContent = `${total} / ${max}`;
+    document.getElementById("summary-flavor").textContent = flavorText(total, totalRounds);
+  }
 
   const list = document.getElementById("summary-round-list");
   list.innerHTML = "";
@@ -47,7 +55,8 @@ export function render(state) {
     if (round) {
       const spectrum = spectrums[round.spectrumId] || { left: ["?", "?"], right: ["?", "?"] };
       const giverName = state.players?.[round.clueGiverUid]?.name || "someone";
-      li.textContent = `Round ${n}: ${spectrum.left[0]} (${spectrum.left[1]}) ↔ ${spectrum.right[0]} (${spectrum.right[1]}) — "${round.clue}" (${giverName}) — +${round.points}`;
+      const teamPrefix = isCompetitive ? `[Team ${round.team}] ` : "";
+      li.textContent = `Round ${n}: ${teamPrefix}${spectrum.left[0]} (${spectrum.left[1]}) ↔ ${spectrum.right[0]} (${spectrum.right[1]}) — "${round.clue}" (${giverName}) — +${round.points}`;
     } else {
       li.textContent = `Round ${n}: —`;
     }
