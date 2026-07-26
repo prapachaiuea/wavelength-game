@@ -17,16 +17,21 @@ export function maxPossibleScore(totalRounds) {
   return 4 * totalRounds;
 }
 
-// Competitive mode: each round record carries which team was on offense (`team: 'A'|'B'`),
-// so team totals are derived the same race-free way as the cooperative running total.
-export function sumTeamScores(rounds) {
-  let scoreA = 0;
-  let scoreB = 0;
+// Competitive mode: each round record carries a `results: { [uid]: { points, ... } }` map (one
+// entry per guesser that round — everyone except that round's clue-giver). Sums each player's
+// points across all rounds and returns them sorted highest-first, ready to render as a
+// leaderboard. Derived from `rounds/*` the same race-free way as the cooperative running total
+// — no mutable score field to fight over.
+export function individualLeaderboard(rounds, players) {
+  const totals = {};
   Object.values(rounds || {}).forEach((r) => {
-    if (r.team === "A") scoreA += r.points || 0;
-    else if (r.team === "B") scoreB += r.points || 0;
+    Object.entries(r.results || {}).forEach(([uid, result]) => {
+      totals[uid] = (totals[uid] || 0) + (result.points || 0);
+    });
   });
-  return { scoreA, scoreB };
+  return Object.entries(totals)
+    .map(([uid, points]) => ({ uid, name: players?.[uid]?.name || "someone", points }))
+    .sort((a, b) => b.points - a.points);
 }
 
 const FLAVOR_BANDS = [

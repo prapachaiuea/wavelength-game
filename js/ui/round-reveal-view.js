@@ -1,6 +1,6 @@
 import { getState } from "../state.js";
 import { nextRoundOrSummary } from "../game.js";
-import { computeScore, maxPossibleScore, sumTeamScores } from "../scoring.js";
+import { maxPossibleScore, individualLeaderboard } from "../scoring.js";
 import { loadSpectrums } from "../utils/spectrums.js";
 import { renderSpectrumBar, showToast } from "./components.js";
 
@@ -35,27 +35,63 @@ export function render(state) {
 
   const spectrum = spectrums[round.spectrumId] || { left: ["?", "?"], right: ["?", "?"] };
   const clueGiverName = state.players?.[round.clueGiverUid]?.name || "someone";
-  const { points, label } = computeScore(round.targetPosition, round.lockedPosition);
-
-  const barEl = document.getElementById("round-reveal-spectrum-bar");
-  renderSpectrumBar(barEl, {
-    left: spectrum.left,
-    right: spectrum.right,
-    markers: [
-      { position: round.targetPosition, className: "marker-target", label: "Target" },
-      { position: round.lockedPosition, className: "marker-pointer marker-locked", label: "Guess" },
-    ],
-  });
+  const isCompetitive = pub.mode === "competitive";
 
   document.getElementById("round-reveal-clue").textContent = `"${round.clue}" — ${clueGiverName}`;
-  const pointsLabel = pub.mode === "competitive" ? `Team ${round.team}: +${points} points — ${label}` : `+${points} points — ${label}`;
-  document.getElementById("round-reveal-points").textContent = pointsLabel;
 
+  const leaderboardEl = document.getElementById("round-reveal-leaderboard");
   const totalEl = document.getElementById("round-reveal-total");
-  if (pub.mode === "competitive") {
-    const { scoreA, scoreB } = sumTeamScores(state.rounds);
-    totalEl.textContent = `Team A: ${scoreA}  ·  Team B: ${scoreB}`;
+  const pointsEl = document.getElementById("round-reveal-points");
+  const barEl = document.getElementById("round-reveal-spectrum-bar");
+
+  if (isCompetitive) {
+    const results = round.results || {};
+    const ranked = Object.entries(results)
+      .map(([uid, r]) => ({ uid, name: state.players?.[uid]?.name || "someone", ...r }))
+      .sort((a, b) => b.points - a.points);
+
+    renderSpectrumBar(barEl, {
+      left: spectrum.left,
+      right: spectrum.right,
+      markers: [
+        { position: round.targetPosition, className: "marker-target", label: "Target" },
+        ...ranked.map((r) => ({ position: r.position, className: "marker-pointer marker-locked", label: r.name })),
+      ],
+    });
+
+    pointsEl.textContent = "";
+    leaderboardEl.hidden = false;
+    leaderboardEl.innerHTML = "";
+    ranked.forEach((r, i) => {
+      const li = document.createElement("li");
+      li.className = `leaderboard-row${i === 0 ? " leaderboard-first" : ""}`;
+      const name = document.createElement("span");
+      name.className = "leaderboard-name";
+      name.textContent = r.name;
+      const points = document.createElement("span");
+      points.className = "leaderboard-points";
+      points.textContent = `+${r.points}`;
+      li.append(name, points);
+      leaderboardEl.appendChild(li);
+    });
+
+    const overall = individualLeaderboard(state.rounds, state.players);
+    totalEl.textContent = overall.length
+      ? `Overall lead: ${overall[0].name} (${overall[0].points} pts)`
+      : "";
   } else {
+    renderSpectrumBar(barEl, {
+      left: spectrum.left,
+      right: spectrum.right,
+      markers: [
+        { position: round.targetPosition, className: "marker-target", label: "Target" },
+        { position: round.lockedPosition, className: "marker-pointer marker-locked", label: "Guess" },
+      ],
+    });
+
+    leaderboardEl.hidden = true;
+    pointsEl.textContent = `+${round.points} points — distance ${round.distance}`;
+
     const total = Object.values(state.rounds || {}).reduce((sum, r) => sum + (r.points || 0), 0);
     totalEl.textContent = `Total: ${total} / ${maxPossibleScore(pub.roundNumber)}`;
   }

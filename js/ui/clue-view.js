@@ -41,9 +41,6 @@ export function render(state) {
   const spectrum = spectrums[pub.spectrumId] || { left: ["?", "?"], right: ["?", "?"] };
   const isClueGiver = state.uid === pub.clueGiverUid;
   const clueGiverName = state.players?.[pub.clueGiverUid]?.name || "someone";
-  const isCompetitive = pub.mode === "competitive";
-  const myTeam = pub.teams?.[state.uid];
-  const isSpectatingTeam = isCompetitive && !isClueGiver && myTeam !== pub.activeTeam;
 
   const barEl = document.getElementById("clue-spectrum-bar");
   const markers = isClueGiver && state.mySecret
@@ -54,9 +51,7 @@ export function render(state) {
   const giverForm = document.getElementById("clue-giver-form");
   const waiting = document.getElementById("clue-waiting");
   const heading = document.getElementById("clue-round-heading");
-  heading.textContent = isCompetitive
-    ? `Round ${pub.roundNumber || 1} of ${pub.totalRounds || 1} — Team ${pub.activeTeam || "?"}'s turn`
-    : `Round ${pub.roundNumber || 1} of ${pub.totalRounds || 1}`;
+  heading.textContent = `Round ${pub.roundNumber || 1} of ${pub.totalRounds || 1}`;
 
   if (isClueGiver) {
     giverForm.hidden = false;
@@ -65,9 +60,8 @@ export function render(state) {
   } else {
     giverForm.hidden = true;
     waiting.hidden = false;
-    document.getElementById("clue-waiting-text").textContent = isSpectatingTeam
-      ? `Team ${pub.activeTeam} is up this round — ${clueGiverName} is giving their team a clue.`
-      : `Waiting for ${clueGiverName} to give a clue...`;
+    document.getElementById("clue-waiting-text").textContent =
+      `Waiting for ${clueGiverName} to give a clue...`;
     minigame.mount(document.getElementById("waiting-minigame"));
   }
 }

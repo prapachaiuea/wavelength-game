@@ -104,6 +104,7 @@ export async function leaveRoom() {
     public: null,
     players: {},
     mySecret: null,
+    myGuess: null,
     rounds: {},
   });
 }
@@ -143,5 +144,12 @@ export function subscribeToRoom(roomId) {
 
   unsubscribers.push(onValue(ref(db, `wavelength/${roomId}/rounds`), (snap) => {
     setState({ rounds: snap.val() || {} });
+  }, ignoreDenied));
+
+  // Competitive mode only — my own private guess for the current round. Denied by rules once
+  // the round moves on and I'm not the reader anymore is not a case that arises here (self-read
+  // is always allowed); this is just empty/null outside competitive mode or before a guess exists.
+  unsubscribers.push(onValue(ref(db, `wavelength/${roomId}/guesses/${uid}`), (snap) => {
+    setState({ myGuess: snap.val() || null });
   }, ignoreDenied));
 }

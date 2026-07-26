@@ -51,12 +51,7 @@
         <button type="button" class="mode-btn" id="mode-btn-cooperative" data-mode="cooperative">Cooperative</button>
         <button type="button" class="mode-btn" id="mode-btn-competitive" data-mode="competitive">Competitive</button>
       </div>
-
-      <div id="team-assign" class="team-assign" hidden>
-        <div class="s-label">Teams</div>
-        <ul id="team-assign-list" class="team-assign-list"></ul>
-        <p class="hint">Each team needs at least 2 players.</p>
-      </div>
+      <p class="hint" id="mode-explainer"></p>
 
       <label>
         Rounds
@@ -115,6 +110,7 @@
       <div id="round-reveal-spectrum-bar" class="spectrum-bar"></div>
       <p class="clue-quote" id="round-reveal-clue"></p>
       <p class="points-banner" id="round-reveal-points"></p>
+      <ol id="round-reveal-leaderboard" class="leaderboard-list" hidden></ol>
       <p class="hint" id="round-reveal-total"></p>
       <button id="btn-continue-round" type="button" hidden>Next Round</button>
     </section>
@@ -123,6 +119,7 @@
       <h2>Final Score</h2>
       <p class="summary-total" id="summary-total"></p>
       <p class="summary-flavor" id="summary-flavor"></p>
+      <ol id="summary-leaderboard" class="leaderboard-list" hidden></ol>
       <ul id="summary-round-list" class="summary-round-list"></ul>
       <button id="btn-play-again" type="button" hidden>Play Again</button>
     </section>

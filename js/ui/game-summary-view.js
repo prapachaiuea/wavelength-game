@@ -1,6 +1,6 @@
 import { getState } from "../state.js";
 import { backToLobby } from "../game.js";
-import { maxPossibleScore, flavorText, sumTeamScores } from "../scoring.js";
+import { maxPossibleScore, flavorText, individualLeaderboard } from "../scoring.js";
 import { loadSpectrums } from "../utils/spectrums.js";
 import { showToast } from "./components.js";
 
@@ -34,12 +34,31 @@ export function render(state) {
   const totalRounds = pub.totalRounds || Object.keys(rounds).length;
   const isCompetitive = pub.mode === "competitive";
 
+  const leaderboardEl = document.getElementById("summary-leaderboard");
+
   if (isCompetitive) {
-    const { scoreA, scoreB } = sumTeamScores(rounds);
-    document.getElementById("summary-total").textContent = `Team A ${scoreA} — ${scoreB} Team B`;
-    const flavor = scoreA === scoreB ? "It's a tie!" : scoreA > scoreB ? "Team A wins!" : "Team B wins!";
-    document.getElementById("summary-flavor").textContent = flavor;
+    const ranked = individualLeaderboard(rounds, state.players);
+    document.getElementById("summary-total").textContent = ranked.length ? `🏆 ${ranked[0].name}` : "—";
+    document.getElementById("summary-flavor").textContent = ranked.length
+      ? `${ranked[0].points} points — closest reader of the room!`
+      : "No guesses recorded.";
+
+    leaderboardEl.hidden = false;
+    leaderboardEl.innerHTML = "";
+    ranked.forEach((r, i) => {
+      const li = document.createElement("li");
+      li.className = `leaderboard-row${i === 0 ? " leaderboard-first" : ""}`;
+      const name = document.createElement("span");
+      name.className = "leaderboard-name";
+      name.textContent = r.name;
+      const points = document.createElement("span");
+      points.className = "leaderboard-points";
+      points.textContent = `${r.points} pts`;
+      li.append(name, points);
+      leaderboardEl.appendChild(li);
+    });
   } else {
+    leaderboardEl.hidden = true;
     const total = Object.values(rounds).reduce((sum, r) => sum + (r.points || 0), 0);
     const max = maxPossibleScore(totalRounds);
     document.getElementById("summary-total").textContent = `${total} / ${max}`;
@@ -55,8 +74,16 @@ export function render(state) {
     if (round) {
       const spectrum = spectrums[round.spectrumId] || { left: ["?", "?"], right: ["?", "?"] };
       const giverName = state.players?.[round.clueGiverUid]?.name || "someone";
-      const teamPrefix = isCompetitive ? `[Team ${round.team}] ` : "";
-      li.textContent = `Round ${n}: ${teamPrefix}${spectrum.left[0]} (${spectrum.left[1]}) ↔ ${spectrum.right[0]} (${spectrum.right[1]}) — "${round.clue}" (${giverName}) — +${round.points}`;
+      const spectrumText = `${spectrum.left[0]} (${spectrum.left[1]}) ↔ ${spectrum.right[0]} (${spectrum.right[1]})`;
+      if (isCompetitive) {
+        const top = Object.entries(round.results || {})
+          .map(([uid, r]) => ({ name: state.players?.[uid]?.name || "someone", points: r.points }))
+          .sort((a, b) => b.points - a.points)[0];
+        const topText = top ? `${top.name} led with +${top.points}` : "no guesses";
+        li.textContent = `Round ${n}: ${spectrumText} — "${round.clue}" (${giverName}) — ${topText}`;
+      } else {
+        li.textContent = `Round ${n}: ${spectrumText} — "${round.clue}" (${giverName}) — +${round.points}`;
+      }
     } else {
       li.textContent = `Round ${n}: —`;
     }

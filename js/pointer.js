@@ -24,47 +24,69 @@ export function beginDrag() {
 // Previously had no error handling at all: a rejected write (e.g. permission denied) failed
 // completely silently, so a broken drag looked identical to "nothing happens" with no signal
 // to debug from. Now surfaces at most one toast per drag gesture, not one per throttled write.
-async function writePointer(roomId, position) {
-  const { uid } = getState();
-  lastWriteAt = Date.now();
+async function writeAt(path, value) {
   try {
-    await update(ref(db, `wavelength/${roomId}/public/pointer`), {
-      position,
-      movedBy: uid,
-      movedAt: Date.now(),
-    });
+    await update(ref(db, path), value);
   } catch (err) {
-    console.error("Failed to write pointer position:", err);
+    console.error(`Failed to write ${path}:`, err);
     if (!warnedThisDrag) {
       warnedThisDrag = true;
-      showToast("Could not move the dial — check your connection.", true);
+      showToast("Could not update your guess — check your connection.", true);
     }
   }
 }
 
 // Throttled to ~WRITE_THROTTLE_MS during active dragging to stay well within Spark-plan
-// write limits for a small room; always call endDrag() on release for one final exact write.
-export function dragTo(roomId, position) {
+// write limits; always follow with an untuned write on release so the settled value is exact.
+function throttledWriteAt(path, value) {
   const now = Date.now();
   clearTimeout(pendingTimeout);
   const elapsed = now - lastWriteAt;
+  lastWriteAt = now;
   if (elapsed >= WRITE_THROTTLE_MS) {
-    writePointer(roomId, position);
+    writeAt(path, value);
   } else {
-    pendingTimeout = setTimeout(() => writePointer(roomId, position), WRITE_THROTTLE_MS - elapsed);
+    pendingTimeout = setTimeout(() => writeAt(path, value), WRITE_THROTTLE_MS - elapsed);
   }
 }
 
-export function endDrag(roomId, position) {
+function stopPending() {
   dragging = false;
   clearTimeout(pendingTimeout);
-  writePointer(roomId, position);
+}
+
+// --- Cooperative: one shared dial for the whole group ---
+
+export function dragTo(roomId, position) {
+  const { uid } = getState();
+  throttledWriteAt(`wavelength/${roomId}/public/pointer`, { position, movedBy: uid, movedAt: Date.now() });
+}
+
+export function endDrag(roomId, position) {
+  stopPending();
+  const { uid } = getState();
+  writeAt(`wavelength/${roomId}/public/pointer`, { position, movedBy: uid, movedAt: Date.now() });
 }
 
 export async function lockGuess(roomId) {
   const { uid } = getState();
-  await update(ref(db, `wavelength/${roomId}/public/pointer`), {
-    locked: true,
-    lockedBy: uid,
-  });
+  await update(ref(db, `wavelength/${roomId}/public/pointer`), { locked: true, lockedBy: uid });
+}
+
+// --- Competitive: each non-clue-giver drags their own private guess ---
+
+export function dragMyGuess(roomId, position) {
+  const { uid } = getState();
+  throttledWriteAt(`wavelength/${roomId}/guesses/${uid}`, { position });
+}
+
+export function endMyGuessDrag(roomId, position) {
+  stopPending();
+  const { uid } = getState();
+  writeAt(`wavelength/${roomId}/guesses/${uid}`, { position });
+}
+
+export async function lockMyGuess(roomId) {
+  const { uid } = getState();
+  await update(ref(db, `wavelength/${roomId}/guesses/${uid}`), { locked: true });
 }

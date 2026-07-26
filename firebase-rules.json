@@ -80,18 +80,6 @@
           "mode": {
             ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
           },
-          "teams": {
-            ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
-          },
-          "teamAOrder": {
-            ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
-          },
-          "teamBOrder": {
-            ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
-          },
-          "activeTeam": {
-            ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
-          },
           "spectrumId": {
             ".write": "auth != null && auth.uid === root.child('wavelength').child($roomId).child('public/host').val()"
           },
@@ -99,16 +87,22 @@
             ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && root.child('wavelength').child($roomId).child('public/phase').val() === 'clue-reveal'))"
           },
           "pointer": {
-            ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (root.child('wavelength').child($roomId).child('players').child(auth.uid).exists() && auth.uid !== root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && root.child('wavelength').child($roomId).child('public/phase').val() === 'guessing' && (root.child('wavelength').child($roomId).child('public/mode').val() !== 'competitive' || root.child('wavelength').child($roomId).child('public/teams').child(auth.uid).val() === root.child('wavelength').child($roomId).child('public/activeTeam').val())))"
+            ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (root.child('wavelength').child($roomId).child('players').child(auth.uid).exists() && auth.uid !== root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && root.child('wavelength').child($roomId).child('public/phase').val() === 'guessing'))"
           },
           "phase": {
-            ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && data.val() === 'clue-reveal' && newData.val() === 'guessing' && root.child('wavelength').child($roomId).child('public/clue').exists()) || (auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && data.val() === 'guessing' && newData.val() === 'round-reveal' && root.child('wavelength').child($roomId).child('public/pointer/locked').val() === true))"
+            ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && data.val() === 'clue-reveal' && newData.val() === 'guessing' && root.child('wavelength').child($roomId).child('public/clue').exists()) || (auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && data.val() === 'guessing' && newData.val() === 'round-reveal' && (root.child('wavelength').child($roomId).child('public/mode').val() === 'competitive' || root.child('wavelength').child($roomId).child('public/pointer/locked').val() === true)))"
           }
         },
         "players": {
           ".read": "auth != null",
           "$uid": {
             ".write": "auth != null && auth.uid === $uid && (data.exists() || root.child('wavelength').child($roomId).child('public/phase').val() === 'lobby')"
+          }
+        },
+        "guesses": {
+          "$uid": {
+            ".read": "auth != null && (auth.uid === $uid || auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() || root.child('wavelength').child($roomId).child('public/phase').val() === 'round-reveal')",
+            ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (auth.uid === $uid && auth.uid !== root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && root.child('wavelength').child($roomId).child('public/phase').val() === 'guessing' && root.child('wavelength').child($roomId).child('public/mode').val() === 'competitive'))"
           }
         },
         "secrets": {
@@ -120,7 +114,7 @@
         "rounds": {
           ".read": "auth != null && root.child('wavelength').child($roomId).child('players').child(auth.uid).exists()",
           "$roundNumber": {
-            ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && root.child('wavelength').child($roomId).child('public/phase').val() === 'guessing' && root.child('wavelength').child($roomId).child('public/pointer/locked').val() === true))"
+            ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && root.child('wavelength').child($roomId).child('public/phase').val() === 'guessing' && (root.child('wavelength').child($roomId).child('public/mode').val() === 'competitive' || root.child('wavelength').child($roomId).child('public/pointer/locked').val() === true)))"
           }
         }
       }
