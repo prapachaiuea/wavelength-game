@@ -12,6 +12,20 @@ let initialized = false;
 let spectrums = [];
 loadSpectrums().then((data) => { spectrums = data; });
 
+let revealInFlight = false;
+
+// Guards against a hung Firebase call leaving the button permanently disabled with no
+// feedback (the reported "stuck until refresh" symptom) — if the reveal hasn't settled within
+// REVEAL_TIMEOUT_MS, treat it as failed so the button becomes clickable again on the next
+// render pass, without needing a full page reload.
+const REVEAL_TIMEOUT_MS = 10000;
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), ms)),
+  ]);
+}
+
 export function init() {
   if (initialized) return;
   initialized = true;
@@ -48,12 +62,18 @@ export function init() {
 
   btnReveal.addEventListener("click", async () => {
     const { roomId } = getState();
+    revealInFlight = true;
     btnReveal.disabled = true;
+    btnReveal.textContent = "Revealing...";
     try {
-      await revealRound(roomId);
+      await withTimeout(revealRound(roomId), REVEAL_TIMEOUT_MS);
     } catch {
       showToast("Could not reveal the round — check your connection.", true);
-      btnReveal.disabled = false;
+    } finally {
+      revealInFlight = false;
+      btnReveal.textContent = "Reveal the Target";
+      // Actual re-enabling happens in render() below — it runs on every state change and is
+      // the single source of truth for whether this button should currently be clickable.
     }
   });
 }
@@ -97,8 +117,13 @@ export function render(state) {
     if (isClueGiver) {
       guesserControls.hidden = true;
       waitingBlock.hidden = false;
+      // Previously a static "Everyone else is locking in..." message regardless of actual
+      // progress — the clue-giver has read access to everyone's guesses (state.allGuesses,
+      // populated by a listener only they/the host can actually read), so show real counts.
+      const guesserUids = Object.keys(state.players || {}).filter((uid) => uid !== pub.clueGiverUid);
+      const lockedCount = guesserUids.filter((uid) => state.allGuesses?.[uid]?.locked).length;
       document.getElementById("guessing-waiting-text").textContent =
-        "Everyone else is locking in their own private guess...";
+        `${lockedCount} of ${guesserUids.length} locked in their guess...`;
     } else {
       guesserControls.hidden = false;
       waitingBlock.hidden = true;
@@ -107,10 +132,13 @@ export function render(state) {
       btnLock.textContent = myGuess.locked ? "Locked In — waiting for others" : "Lock In Guess";
     }
 
-    // No cross-player "everyone locked" check (RTDB rules can't aggregate across children),
-    // so the clue-giver/host decides when to reveal — same social convention as the physical
-    // game ("is everyone done? revealing now").
+    // No hard gate on "everyone locked" (the clue-giver/host can reveal early if they choose —
+    // same social convention as the physical game), but the count above at least tells them
+    // the truth about how many actually have. Re-asserts disabled=false on every render unless
+    // a reveal click from THIS tab is still in flight — the single source of truth for the
+    // button's clickability, instead of leaving it wherever the last click handler left it.
     btnReveal.hidden = !(isClueGiver || state.isHost);
+    if (!revealInFlight) btnReveal.disabled = false;
   } else {
     const pointer = pub.pointer || { position: 500, locked: false };
     const markers = [];
@@ -142,5 +170,6 @@ export function render(state) {
     }
 
     btnReveal.hidden = !(pointer.locked && (isClueGiver || state.isHost));
+    if (!revealInFlight) btnReveal.disabled = false;
   }
 }

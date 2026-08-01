@@ -8,6 +8,7 @@ const state = {
   players: {},
   mySecret: null,
   myGuess: null,
+  allGuesses: {},
   rounds: {},
 };
 

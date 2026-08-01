@@ -23,7 +23,7 @@ export function setRoomInUrl(roomId) {
   window.history.replaceState({}, "", url);
 }
 
-function clearRoomFromUrl() {
+export function clearRoomFromUrl() {
   const url = new URL(window.location.href);
   url.searchParams.delete("room");
   window.history.replaceState({}, "", url);
@@ -105,6 +105,7 @@ export async function leaveRoom() {
     players: {},
     mySecret: null,
     myGuess: null,
+    allGuesses: {},
     rounds: {},
   });
 }
@@ -151,5 +152,13 @@ export function subscribeToRoom(roomId) {
   // is always allowed); this is just empty/null outside competitive mode or before a guess exists.
   unsubscribers.push(onValue(ref(db, `wavelength/${roomId}/guesses/${uid}`), (snap) => {
     setState({ myGuess: snap.val() || null });
+  }, ignoreDenied));
+
+  // Aggregate view of everyone's guesses — only readable by the host or the current clue-giver
+  // (or by anyone once phase is round-reveal), so this resolves to permission-denied and stays
+  // empty for ordinary guessers, which is intentional: it's what lets the clue-giver see real
+  // "X of Y locked in" progress instead of a static guess.
+  unsubscribers.push(onValue(ref(db, `wavelength/${roomId}/guesses`), (snap) => {
+    setState({ allGuesses: snap.val() || {} });
   }, ignoreDenied));
 }

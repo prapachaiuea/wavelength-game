@@ -52,18 +52,23 @@ async function advanceRound(roomId) {
   updates[`wavelength/${roomId}/public/spectrumId`] = spectrumId;
   updates[`wavelength/${roomId}/public/clue`] = null;
 
+  // `guesses` only has a per-child write rule (host, or a guesser writing their own uid) — never
+  // a parent-level one — so writing null to the `guesses` PARENT directly is denied even for the
+  // host, and because this all runs inside one atomic multi-path update(), that single denied
+  // sub-write silently rolled back every other field in this same call too (confirmed live
+  // against the database: this broke every cooperative-mode round transition, not just this
+  // one). Always clear/seed via individual `guesses/{uid}` child paths instead.
   if (isCompetitive) {
     updates[`wavelength/${roomId}/public/pointer`] = null;
     Object.keys(players || {}).forEach((uid) => {
-      if (uid !== clueGiverUid) {
-        updates[`wavelength/${roomId}/guesses/${uid}`] = {
-          position: Math.floor(POSITION_MAX / 2),
-          locked: false,
-        };
-      }
+      updates[`wavelength/${roomId}/guesses/${uid}`] = uid === clueGiverUid
+        ? null // clears any leftover guess from a round where this player was a guesser
+        : { position: Math.floor(POSITION_MAX / 2), locked: false };
     });
   } else {
-    updates[`wavelength/${roomId}/guesses`] = null;
+    Object.keys(players || {}).forEach((uid) => {
+      updates[`wavelength/${roomId}/guesses/${uid}`] = null;
+    });
     updates[`wavelength/${roomId}/public/pointer`] = {
       position: Math.floor(POSITION_MAX / 2),
       movedBy: null,
@@ -124,13 +129,18 @@ export async function revealRound(roomId) {
 
   if (isCompetitive) {
     const guesserUids = Object.keys(players || {}).filter((uid) => uid !== pub.clueGiverUid);
+    // Parallelized (was a sequential for-await loop) — with several guessers, awaiting each
+    // get() one at a time could add up to a few real seconds on a slow connection, long enough
+    // that a reveal click looked stuck even though it was still quietly working.
+    const snaps = await Promise.all(
+      guesserUids.map((uid) => get(ref(db, `wavelength/${roomId}/guesses/${uid}`)))
+    );
     const results = {};
-    for (const uid of guesserUids) {
-      const snap = await get(ref(db, `wavelength/${roomId}/guesses/${uid}`));
-      const position = snap.val()?.position ?? Math.floor(POSITION_MAX / 2);
+    guesserUids.forEach((uid, i) => {
+      const position = snaps[i].val()?.position ?? Math.floor(POSITION_MAX / 2);
       const { distance, points } = computeScore(targetPosition, position);
       results[uid] = { position, distance, points };
-    }
+    });
     roundRecord.results = results;
   } else {
     const lockedPosition = pub.pointer?.position ?? Math.floor(POSITION_MAX / 2);
@@ -154,12 +164,16 @@ export async function nextRoundOrSummary(roomId) {
 }
 
 export async function backToLobby(roomId) {
-  const { public: pub } = getState();
+  const { public: pub, players } = getState();
   const updates = {};
   for (let n = 1; n <= (pub.roundNumber || 0); n++) {
     updates[`wavelength/${roomId}/rounds/${n}`] = null;
   }
-  updates[`wavelength/${roomId}/guesses`] = null;
+  // See the comment in advanceRound() — `guesses` has no parent-level write rule, so it must
+  // be cleared per-uid, not by nulling the whole node at once.
+  Object.keys(players || {}).forEach((uid) => {
+    updates[`wavelength/${roomId}/guesses/${uid}`] = null;
+  });
   updates[`wavelength/${roomId}/public/clue`] = null;
   updates[`wavelength/${roomId}/public/clueGiverUid`] = null;
   updates[`wavelength/${roomId}/public/clueGiverOrder`] = null;

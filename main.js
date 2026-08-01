@@ -1,8 +1,8 @@
 import { initAuth } from "./js/auth.js";
 import { getState, setState, subscribe } from "./js/state.js";
-import { createRoom, joinRoom, leaveRoom, getRoomIdFromUrl, setRoomInUrl } from "./js/room.js";
+import { createRoom, joinRoom, leaveRoom, getRoomIdFromUrl, clearRoomFromUrl } from "./js/room.js";
 import { renderRoute } from "./js/router.js";
-import { getLastName, getLastRoom } from "./js/utils/storage.js";
+import { getLastName, getLastRoom, clearLastRoom } from "./js/utils/storage.js";
 import { showToast } from "./js/ui/components.js";
 
 import * as lobbyView from "./js/ui/lobby-view.js";
@@ -43,21 +43,33 @@ async function boot() {
   }
 }
 
+// Resets the landing form to a clean "Create Room" state — used whenever a stale room
+// reference (dead link, finished game) needs to stop pinning the UI in "Join Room" mode.
+function resetLandingToCreateMode() {
+  clearLastRoom();
+  clearRoomFromUrl();
+  document.getElementById("btn-primary-action").textContent = "Create Room";
+  document.getElementById("landing-join-row").hidden = true;
+  document.getElementById("landing-join-alt").hidden = false;
+  document.getElementById("input-room-code").value = "";
+}
+
 async function prefillLanding() {
-  const roomFromUrlRaw = getRoomIdFromUrl();
+  const roomFromUrl = getRoomIdFromUrl();
   const savedRoom = getLastRoom();
   const lastName = getLastName();
-
-  let roomFromUrl = roomFromUrlRaw;
-  if (!roomFromUrl && savedRoom) {
-    roomFromUrl = savedRoom;
-    setRoomInUrl(roomFromUrl);
-  }
 
   if (lastName) {
     document.getElementById("input-name").value = lastName;
   }
 
+  // Only ever reflect "Join Room" mode when the URL itself already carries a room code (a
+  // share link, or a refresh of a page that already had ?room= set). Previously, a browser
+  // with nothing but a leftover localStorage room (no ?room= in the URL at all — e.g. the tab
+  // was just closed mid-game instead of using Leave Room) had that stale code silently written
+  // INTO the URL here, permanently flipping the primary button to "Join Room" — with no way
+  // back to "Create Room" short of hand-editing the address bar, since the "or join with a
+  // different code" section was hidden right along with it.
   if (roomFromUrl) {
     document.getElementById("btn-primary-action").textContent = "Join Room";
     document.getElementById("landing-join-row").hidden = false;
@@ -67,12 +79,14 @@ async function prefillLanding() {
 
   // Only silently rejoin if we're returning to the SAME room we were already in (a refresh) —
   // not whenever this browser happens to have a leftover name/room from a past, different game.
-  const isReturningToSameRoom = roomFromUrlRaw && savedRoom === roomFromUrlRaw;
+  const isReturningToSameRoom = roomFromUrl && savedRoom === roomFromUrl;
   if (isReturningToSameRoom && lastName) {
     try {
       await joinRoom(roomFromUrl, lastName);
     } catch {
-      // Room may no longer exist or the game already started — fall back to the manual form.
+      // Room may no longer exist or the game already finished — reset to a clean form instead
+      // of leaving the UI stuck pointed at a dead room code.
+      resetLandingToCreateMode();
     }
   }
 }
@@ -96,6 +110,12 @@ function setupLandingForm() {
       }
     } catch (err) {
       showError(err);
+      // A dead room reached via ?room= (an old share link, a finished game) has no other way
+      // back to "Create Room" — the alt-join section is hidden whenever this mode is active —
+      // so clear it and hand the user back a working form instead of leaving them stuck.
+      if (roomFromUrl && err.message === "ROOM_NOT_FOUND") {
+        resetLandingToCreateMode();
+      }
     }
   });
 
