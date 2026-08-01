@@ -4,7 +4,7 @@ import { getState } from "./state.js";
 import { computeScore } from "./scoring.js";
 import { loadSpectrums } from "./utils/spectrums.js";
 
-export const MIN_PLAYERS = 3;
+export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 10;
 export const DEFAULT_TOTAL_ROUNDS = 5;
 export const POSITION_MAX = 1000;

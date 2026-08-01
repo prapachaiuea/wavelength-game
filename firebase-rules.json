@@ -4,6 +4,7 @@
     ".write": false,
     "rooms": {
       "$roomId": {
+        ".write": "auth != null && !newData.exists() && data.child('public/createdAt').exists() && now > data.child('public/createdAt').val() + 86400000",
         "public": {
           ".read": "auth != null",
           "host": {
@@ -57,6 +58,7 @@
     },
     "wavelength": {
       "$roomId": {
+        ".write": "auth != null && !newData.exists() && data.child('public/createdAt').exists() && now > data.child('public/createdAt').val() + 86400000",
         "public": {
           ".read": "auth != null",
           "host": {

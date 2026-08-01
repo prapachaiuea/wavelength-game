@@ -6,10 +6,16 @@ import { getState, setState } from "./state.js";
 import { generateRoomCode } from "./utils/id.js";
 import { saveLastRoom, saveLastName, clearLastRoom } from "./utils/storage.js";
 import { DEFAULT_TOTAL_ROUNDS } from "./game.js";
+import { showToast } from "./ui/components.js";
 
 const MAX_CODE_ATTEMPTS = 5;
+// No Cloud Functions on the free Spark plan, so there's no server-side cron to sweep abandoned
+// rooms — instead, any room older than this is treated as gone the next time someone tries to
+// join it (opportunistic/lazy expiry, not a guaranteed immediate sweep of every dead room).
+const ROOM_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 let subscribedRoomId = null;
 let unsubscribers = [];
+let hadRealPublicData = false;
 
 export function getRoomIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -62,6 +68,15 @@ export async function joinRoom(roomId, name) {
   }
   const publicData = publicSnap.val();
 
+  if (publicData.createdAt && Date.now() - publicData.createdAt > ROOM_TTL_MS) {
+    // Expired — treat exactly like a room that was never there, and take the opportunity to
+    // actually reclaim the space (rules permit anyone to delete a room once it's past TTL).
+    // Fire-and-forget: whether the delete itself succeeds doesn't change the outcome for this
+    // join attempt, and racing with someone else's cleanup of the same room is harmless.
+    remove(ref(db, `wavelength/${roomId}`)).catch(() => {});
+    throw new Error("ROOM_NOT_FOUND");
+  }
+
   const playerRef = ref(db, `wavelength/${roomId}/players/${uid}`);
   const existingSnap = await get(playerRef);
   if (!existingSnap.exists() && publicData.phase !== "lobby") {
@@ -73,7 +88,6 @@ export async function joinRoom(roomId, name) {
     joinedAt: existingSnap.exists() ? existingSnap.val().joinedAt : Date.now(),
     online: true,
   });
-  onDisconnect(ref(db, `wavelength/${roomId}/players/${uid}/online`)).set(false);
 
   saveLastRoom(roomId);
   setRoomInUrl(roomId);
@@ -120,12 +134,35 @@ export function subscribeToRoom(roomId) {
   if (subscribedRoomId === roomId) return; // already listening to this room
   if (subscribedRoomId !== null) unsubscribeFromRoom(); // switched rooms in the same tab
   subscribedRoomId = roomId;
+  hadRealPublicData = false;
 
   const { uid } = getState();
   const ignoreDenied = () => {};
 
+  // Presence: re-armed every time the client (re)connects, not just once at join time. A
+  // one-shot onDisconnect() call made only when joinRoom() runs correctly flips "online:false"
+  // on that specific connection dropping, but does nothing to flip it back to "online:true"
+  // once the Firebase SDK auto-reconnects after a transient network drop — a very real scenario
+  // on mobile data. Listening to .info/connected and redoing this on every reconnect keeps the
+  // flag accurate for the whole session, not just at the moment of joining.
+  unsubscribers.push(onValue(ref(db, ".info/connected"), (snap) => {
+    if (snap.val() !== true) return;
+    const onlineRef = ref(db, `wavelength/${roomId}/players/${uid}/online`);
+    onDisconnect(onlineRef).set(false).then(() => set(onlineRef, true));
+  }));
+
   unsubscribers.push(onValue(ref(db, `wavelength/${roomId}/public`), (snap) => {
-    const publicData = snap.val() || {};
+    const publicData = snap.val();
+    if (!publicData) {
+      // The room itself is gone (e.g. swept by another client's TTL cleanup while this tab
+      // sat idle) — don't render a blank/broken lobby, just back out gracefully.
+      if (hadRealPublicData) {
+        showToast("This room no longer exists.", true);
+        leaveRoom();
+      }
+      return;
+    }
+    hadRealPublicData = true;
     setState({
       public: publicData,
       phase: publicData.phase || "lobby",

@@ -63,30 +63,39 @@ async function prefillLanding() {
     document.getElementById("input-name").value = lastName;
   }
 
-  // Only ever reflect "Join Room" mode when the URL itself already carries a room code (a
-  // share link, or a refresh of a page that already had ?room= set). Previously, a browser
-  // with nothing but a leftover localStorage room (no ?room= in the URL at all — e.g. the tab
-  // was just closed mid-game instead of using Leave Room) had that stale code silently written
-  // INTO the URL here, permanently flipping the primary button to "Join Room" — with no way
-  // back to "Create Room" short of hand-editing the address bar, since the "or join with a
-  // different code" section was hidden right along with it.
+  // Case 1: the URL itself already carries a room code (a share link, or a refresh of a page
+  // that had ?room= set). Reflect Join-Room mode immediately, and if it matches the room we
+  // were last known to be in, attempt a silent rejoin — this is the normal "network dropped,
+  // page reloaded" reconnect path.
   if (roomFromUrl) {
     document.getElementById("btn-primary-action").textContent = "Join Room";
     document.getElementById("landing-join-row").hidden = false;
     document.getElementById("landing-room-code").textContent = roomFromUrl;
     document.getElementById("landing-join-alt").hidden = true;
+
+    if (savedRoom === roomFromUrl && lastName) {
+      try {
+        await joinRoom(roomFromUrl, lastName);
+      } catch {
+        // Room may no longer exist (expired/finished) — reset to a clean form instead of
+        // leaving the UI stuck pointed at a dead room code.
+        resetLandingToCreateMode();
+      }
+    }
+    return;
   }
 
-  // Only silently rejoin if we're returning to the SAME room we were already in (a refresh) —
-  // not whenever this browser happens to have a leftover name/room from a past, different game.
-  const isReturningToSameRoom = roomFromUrl && savedRoom === roomFromUrl;
-  if (isReturningToSameRoom && lastName) {
+  // Case 2: no room in the URL at all, but this browser remembers being in one — e.g. the tab
+  // was closed (or the app backgrounded and killed) mid-game instead of using Leave Room, then
+  // reopened via a plain bookmark/new tab with no ?room= param. Try a silent rejoin using ONLY
+  // the remembered room, and NEVER mutate the URL/UI until that attempt has actually succeeded
+  // — unlike the old behavior, a dead saved room here leaves no visible trace at all if it
+  // fails, so there's nothing to get stuck in.
+  if (savedRoom && lastName) {
     try {
-      await joinRoom(roomFromUrl, lastName);
+      await joinRoom(savedRoom, lastName);
     } catch {
-      // Room may no longer exist or the game already finished — reset to a clean form instead
-      // of leaving the UI stuck pointed at a dead room code.
-      resetLandingToCreateMode();
+      clearLastRoom();
     }
   }
 }
