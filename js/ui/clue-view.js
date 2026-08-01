@@ -8,6 +8,13 @@ let initialized = false;
 let spectrums = [];
 loadSpectrums().then((data) => { spectrums = data; });
 
+// Tracks which round the clue input was last cleared for. The <input> is a single persistent
+// DOM node (the view is only ever hidden, never recreated), so whatever text was last typed
+// stays in it forever unless something explicitly clears it — previously nothing did, so a
+// player who was clue-giver in round 1 would see their old clue still sitting in the box the
+// next time they became clue-giver in a later round.
+let clearedForRound = null;
+
 export function init() {
   if (initialized) return;
   initialized = true;
@@ -23,6 +30,7 @@ export function init() {
     btn.disabled = true;
     try {
       await submitClue(roomId, text);
+      input.value = "";
     } catch {
       showToast("Could not submit the clue — check your connection.", true);
     } finally {
@@ -57,6 +65,14 @@ export function render(state) {
     giverForm.hidden = false;
     waiting.hidden = true;
     minigame.unmount();
+    // Safety net alongside the post-submit clear in init(): if this player was clue-giver in
+    // an earlier round and never actually submitted (closed the tab, refreshed), the box would
+    // otherwise still hold that old text now that they're clue-giver again. Only clears once
+    // per round (not on every render pass) so it never fights with what they're actively typing.
+    if (clearedForRound !== pub.roundNumber) {
+      clearedForRound = pub.roundNumber;
+      document.getElementById("input-clue").value = "";
+    }
   } else {
     giverForm.hidden = true;
     waiting.hidden = false;

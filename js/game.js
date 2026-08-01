@@ -34,8 +34,19 @@ export async function setMode(roomId, mode) {
 // the clue-giver rotation is identical between modes; only the per-round "who's guessing what"
 // state differs (a single shared public/pointer for cooperative vs. one private guesses/{uid}
 // per guesser for competitive).
+//
+// Reads public/players fresh from the server rather than trusting the host's local cached
+// getState() — the local copy is only as current as this tab's listeners have caught up, and
+// basing the next clue-giver's identity on a stale roundNumber/clueGiverOrder would silently
+// desync who's actually supposed to give the clue this round. The same reasoning already
+// applies to revealRound() below.
 async function advanceRound(roomId) {
-  const { public: pub, players } = getState();
+  const [publicSnap, playersSnap] = await Promise.all([
+    get(ref(db, `wavelength/${roomId}/public`)),
+    get(ref(db, `wavelength/${roomId}/players`)),
+  ]);
+  const pub = publicSnap.val() || {};
+  const players = playersSnap.val() || {};
   const clueGiverOrder = pub.clueGiverOrder || [];
   const roundNumber = (pub.roundNumber || 0) + 1;
   const clueGiverUid = clueGiverOrder[(roundNumber - 1) % clueGiverOrder.length];
@@ -112,10 +123,16 @@ export async function submitClue(roomId, text) {
 // Clue-giver only (host fallback if they've disconnected). Reads via one-shot get() calls
 // rather than relying on cached local state, since the revealer needs data that isn't
 // necessarily their own (the target, and in competitive mode, every other player's private
-// guess). Two sequential writes for the same read-then-transition ambiguity reason as
-// submitClue.
+// guess) and — same reasoning as advanceRound() — a stale local roundNumber/clueGiverUid here
+// would record the round under the wrong number or against the wrong clue-giver. Two sequential
+// writes for the same read-then-transition ambiguity reason as submitClue.
 export async function revealRound(roomId) {
-  const { public: pub, players } = getState();
+  const [publicSnap, playersSnap] = await Promise.all([
+    get(ref(db, `wavelength/${roomId}/public`)),
+    get(ref(db, `wavelength/${roomId}/players`)),
+  ]);
+  const pub = publicSnap.val() || {};
+  const players = playersSnap.val() || {};
   const isCompetitive = pub.mode === "competitive";
   const targetSnap = await get(ref(db, `wavelength/${roomId}/secrets/${pub.clueGiverUid}`));
   const targetPosition = targetSnap.val()?.targetPosition ?? 0;
@@ -155,7 +172,10 @@ export async function revealRound(roomId) {
 }
 
 export async function nextRoundOrSummary(roomId) {
-  const { public: pub } = getState();
+  // Fresh read for the same reason as advanceRound() — deciding "one more round or done" off
+  // a stale local roundNumber/totalRounds could end the game a round early or late.
+  const publicSnap = await get(ref(db, `wavelength/${roomId}/public`));
+  const pub = publicSnap.val() || {};
   if ((pub.roundNumber || 0) >= (pub.totalRounds || DEFAULT_TOTAL_ROUNDS)) {
     await update(ref(db, `wavelength/${roomId}/public`), { phase: "game-summary" });
   } else {
