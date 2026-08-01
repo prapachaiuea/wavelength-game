@@ -158,8 +158,12 @@ export function playSuccess() {
 }
 
 const SCENES = {
-  ambient: () => startPad([146.83, 185.0, 220.0], { type: "sine", swell: 5 }), // D3-F#3-A3, warm
-  focus: () => startPulse([196.0, 220.0, 246.94, 293.66], { type: "triangle", bpm: 84 }),
+  // G2 doubled with a partner 0.5Hz off creates a slow natural beating — a signal drifting in
+  // and out of tune — under an open D3/B3 on top. Airy and spacious, not "warm" like a pad.
+  ambient: () => startPad([98.0, 98.5, 146.83, 246.94], { type: "sine", swell: 7 }), // G2(detuned)-D3-B3
+  // An open-fifths arpeggio instead of a driving pulse — there's no clock in this phase, so
+  // the mood is floating/telepathic rather than urgent.
+  focus: () => startPulse([293.66, 440.0, 587.33, 440.0], { type: "sine", bpm: 70 }), // D4-A4-D5-A4
 };
 
 function sceneKeyForPhase(phase) {
@@ -177,8 +181,8 @@ export function updateForState(state) {
   if (activePhase === lastPhase) return;
   lastPhase = activePhase;
 
-  if (activePhase === "round-reveal") playSting([174.61, 220.0, 261.63], { duration: 1.2 }); // F3-A3-C4
-  if (activePhase === "game-summary") playSting([110.0, 138.59, 164.81, 220.0], { duration: 2.0 }); // A2-C#3-E3-A3
+  if (activePhase === "round-reveal") playSting([196.0, 246.94, 293.66], { duration: 1.2 }); // G3-B3-D4
+  if (activePhase === "game-summary") playSting([98.0, 123.47, 146.83, 196.0], { duration: 2.0 }); // G2-B2-D3-G3
 
   const sceneKey = sceneKeyForPhase(activePhase);
   if (sceneKey !== currentSceneKey) {
