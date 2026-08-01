@@ -4,6 +4,7 @@ import { createRoom, joinRoom, leaveRoom, getRoomIdFromUrl, clearRoomFromUrl } f
 import { renderRoute } from "./js/router.js";
 import { getLastName, getLastRoom, clearLastRoom } from "./js/utils/storage.js";
 import { showToast } from "./js/ui/components.js";
+import { unlockAudio, updateForState, isMuted, setMuted, playClick } from "./js/audio.js";
 
 import * as lobbyView from "./js/ui/lobby-view.js";
 import * as clueView from "./js/ui/clue-view.js";
@@ -21,8 +22,11 @@ async function boot() {
   subscribe((state) => {
     renderRoute(state);
     views.forEach((v) => v.render(state));
+    updateForState(state);
   });
   setupLandingForm();
+  setupMusicToggle();
+  setupClickSfx();
   document.getElementById("btn-leave-room").addEventListener("click", async () => {
     try {
       await leaveRoom();
@@ -100,12 +104,40 @@ async function prefillLanding() {
   }
 }
 
+// One delegated listener covers every button in the app — including ones views build later
+// via render() — with a soft click tick, and doubles as the audio-unlock gesture.
+function setupClickSfx() {
+  document.addEventListener("click", (e) => {
+    const control = e.target.closest("button");
+    if (!control || control.disabled) return;
+    unlockAudio();
+    playClick();
+  });
+}
+
+// Reflects the persisted mute preference on the header button and wires its toggle.
+function setupMusicToggle() {
+  const btn = document.getElementById("btn-mute-music");
+  function render() {
+    const isMutedNow = isMuted();
+    btn.textContent = isMutedNow ? "🔇" : "🔊";
+    btn.setAttribute("aria-pressed", String(isMutedNow));
+  }
+  btn.addEventListener("click", () => {
+    unlockAudio();
+    setMuted(!isMuted());
+    render();
+  });
+  render();
+}
+
 function setupLandingForm() {
   const form = document.getElementById("form-landing");
   const btnJoinAlt = document.getElementById("btn-join-room");
   const errorEl = document.getElementById("landing-error");
 
   form.addEventListener("submit", async (e) => {
+    unlockAudio();
     e.preventDefault();
     const name = document.getElementById("input-name").value.trim();
     if (!name) return;
