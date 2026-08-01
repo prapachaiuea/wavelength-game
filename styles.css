@@ -33,8 +33,8 @@
 
   --border: #262a40;
   --border-strong: #333a56;
-  --radius: 12px;
-  --radius-lg: 18px;
+  --radius: 7px;
+  --radius-lg: 10px;
 
   --font-display: "Space Grotesk", "Arial", sans-serif;
   --font-body: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -154,15 +154,43 @@ body {
   padding: 1rem 1.25rem 3rem;
 }
 
+/* Every card reads as an instrument panel — corner brackets like a tuner's display frame,
+   not a soft rounded card. This repeats the "precision equipment" idea structurally, not just
+   in the dial itself, which is what makes the identity legible even before you read any text. */
 .view {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 1.6rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
   box-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.55);
+}
+
+.view::before,
+.view::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--accent-soft);
+  pointer-events: none;
+}
+
+.view::before {
+  top: 10px;
+  left: 10px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.view::after {
+  bottom: 10px;
+  right: 10px;
+  border-left: none;
+  border-top: none;
 }
 
 .view[hidden] {
