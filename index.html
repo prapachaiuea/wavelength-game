@@ -4,18 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wavelength</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="signal-field" aria-hidden="true"></div>
   <header class="app-header">
-    <h1><span class="logo-mark">))) </span>Wavelength</h1>
+    <h1><span class="logo-mark">)))</span>Wavelength</h1>
+    <p class="tuning-eyebrow" id="tuning-eyebrow">tune in together</p>
     <p class="room-code" id="room-code-display" hidden></p>
     <button id="btn-leave-room" type="button" class="leave-link" hidden>Leave Room</button>
   </header>
 
   <main id="app">
     <section id="view-landing" class="view">
-      <p class="tagline">A cooperative party game about reading each other's minds. One player sees a hidden target on a dial — everyone else has to guess where it is.</p>
+      <p class="tagline">A cooperative party game about reading each other's minds. One player sees a hidden target frequency — everyone else has to tune in and find it together.</p>
       <form id="form-landing">
         <label>
           Your name

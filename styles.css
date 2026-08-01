@@ -1,23 +1,60 @@
+/* ============================================================
+   WAVELENGTH — "Signal Lock"
+   Reading each other's minds is two signals trying to converge:
+   a warm, known guess reaching for a cool, hidden target. The
+   whole palette and the dial itself are built around that tension.
+   ============================================================ */
+
 :root {
   color-scheme: dark;
-  --bg: #10171a;
-  --surface: #172226;
-  --surface-alt: #1f2e33;
-  --text: #f2f6f5;
-  --text-muted: #93a5a3;
-  --accent: #ff7a45;
-  --accent-soft: rgba(255, 122, 69, 0.16);
-  --target: #ffd166;
-  --target-soft: rgba(255, 209, 102, 0.18);
-  --win: #4cd9a0;
-  --win-soft: rgba(76, 217, 160, 0.16);
+
+  --bg: #0b0d16;
+  --surface: #141726;
+  --surface-alt: #1c2033;
+  --surface-raised: #232842;
+
+  --text: #f3f1fa;
+  --text-muted: #8b8fa8;
+  --text-faint: #565b78;
+
+  /* Amber — the group's own signal: the guess, the dial you control. */
+  --accent: #ffb03f;
+  --accent-soft: rgba(255, 176, 63, 0.16);
+  --accent-strong: #ffc873;
+
+  /* Violet — the hidden signal: the hint, the target you don't. */
+  --target: #8c7bff;
+  --target-soft: rgba(140, 123, 255, 0.18);
+
+  /* Aurora green — the two signals aligning. */
+  --win: #34d399;
+  --win-soft: rgba(52, 211, 153, 0.16);
   --lose: #ff6b6b;
-  --border: #24343a;
-  --radius: 16px;
+
+  --border: #262a40;
+  --border-strong: #333a56;
+  --radius: 12px;
+  --radius-lg: 18px;
+
+  --font-display: "Space Grotesk", "Arial", sans-serif;
+  --font-body: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "Space Mono", "SFMono-Regular", Consolas, monospace;
 }
 
 * {
   box-sizing: border-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html {
+  background: var(--bg);
 }
 
 body {
@@ -25,47 +62,85 @@ body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-body);
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+}
+
+/* Two signals glowing from opposite corners — the amber guess, the violet target. */
+.signal-field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 640px 420px at 12% -6%, rgba(255, 176, 63, 0.10), transparent 60%),
+    radial-gradient(ellipse 640px 420px at 88% 8%, rgba(140, 123, 255, 0.12), transparent 60%);
+}
+
+.app-header,
+#app,
+.toast {
+  position: relative;
+  z-index: 1;
 }
 
 .app-header {
   width: 100%;
   max-width: 480px;
-  padding: 1.5rem 1.25rem 0;
+  padding: 1.6rem 1.25rem 0;
   text-align: center;
 }
 
 .app-header h1 {
-  font-size: 1.6rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
 .logo-mark {
   color: var(--accent);
-  font-weight: 800;
+  margin-right: 0.3rem;
+  display: inline-block;
+  animation: broadcast 2.6s ease-in-out infinite;
+}
+
+@keyframes broadcast {
+  0%, 100% { opacity: 0.55; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(1px); }
+}
+
+.tuning-eyebrow {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
 .room-code {
   color: var(--text-muted);
-  font-size: 0.9rem;
-  letter-spacing: 0.05em;
-  margin-top: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  margin-top: 0.4rem;
 }
 
 .leave-link {
   background: none;
   border: none;
-  color: var(--text-muted);
-  font-size: 0.85rem;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
   font-weight: 500;
-  padding: 0.4rem 0;
+  padding: 0.5rem 0 0;
   text-decoration: underline;
-  margin-top: 0.15rem;
+  text-underline-offset: 2px;
 }
 
 .leave-link:hover:not(:disabled) {
@@ -82,11 +157,12 @@ body {
 .view {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  box-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.55);
 }
 
 .view[hidden] {
@@ -94,51 +170,52 @@ body {
 }
 
 .view h2 {
+  font-family: var(--font-display);
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 700;
 }
 
 .tagline {
   color: var(--text-muted);
   margin: 0 0 0.25rem;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 label {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
 input[type="text"] {
   background: var(--surface-alt);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   padding: 0.7rem 0.85rem;
+  font-family: var(--font-body);
   font-size: 1rem;
   color: var(--text);
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus-visible,
+select:focus-visible,
+button:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 select {
   background: var(--surface-alt);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   padding: 0.7rem 0.85rem;
+  font-family: var(--font-body);
   font-size: 1rem;
   color: var(--text);
-}
-
-select:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
 }
 
 select:disabled {
@@ -149,8 +226,9 @@ button {
   background: var(--accent);
   color: #1a0f08;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 0.75rem 1rem;
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
@@ -173,7 +251,7 @@ button:disabled {
 #btn-copy-link {
   background: var(--surface-alt);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   flex-shrink: 0;
 }
 
@@ -185,8 +263,11 @@ button:disabled {
 
 .divider {
   text-align: center;
-  color: var(--text-muted);
-  font-size: 0.85rem;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   position: relative;
 }
 
@@ -201,6 +282,7 @@ button:disabled {
   font-size: 0.9rem;
   margin: 0;
   text-align: center;
+  line-height: 1.5;
 }
 
 .share-row {
@@ -210,6 +292,7 @@ button:disabled {
 
 .share-row input {
   flex: 1;
+  font-family: var(--font-mono);
 }
 
 .player-list {
@@ -223,8 +306,8 @@ button:disabled {
 
 .player-chip {
   background: var(--surface-alt);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   padding: 0.6rem 0.85rem;
   font-size: 0.95rem;
 }
@@ -234,11 +317,12 @@ button:disabled {
 }
 
 .s-label {
-  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text-faint);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   margin: 0.25rem 0 -0.35rem;
 }
 
@@ -251,7 +335,7 @@ button:disabled {
   flex: 1;
   background: var(--surface-alt);
   color: var(--text-muted);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   font-weight: 600;
 }
 
@@ -277,8 +361,8 @@ button:disabled {
   align-items: center;
   gap: 0.6rem;
   background: var(--surface-alt);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   padding: 0.55rem 0.8rem;
   font-size: 0.9rem;
 }
@@ -290,13 +374,14 @@ button:disabled {
   height: 1.6em;
   border-radius: 50%;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .leaderboard-row.leaderboard-first::before {
@@ -310,8 +395,8 @@ button:disabled {
 }
 
 .leaderboard-points {
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  font-weight: 700;
   color: var(--accent);
 }
 
@@ -319,20 +404,20 @@ button:disabled {
 
 .round-heading {
   text-align: center;
-  color: var(--text-muted);
-  font-size: 0.78rem;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-weight: 700;
+  letter-spacing: 0.18em;
   margin: 0;
-  font-variant-numeric: tabular-nums;
 }
 
 .clue-quote {
   text-align: center;
-  font-size: 1.35rem;
-  font-weight: 700;
-  margin: 0.25rem 0 0.25rem;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0.25rem 0;
   line-height: 1.35;
 }
 
@@ -344,13 +429,14 @@ button:disabled {
 
 .points-banner {
   text-align: center;
+  font-family: var(--font-display);
   font-size: 1.3rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--win);
   margin: 0.25rem 0 0;
 }
 
-/* Spectrum bar — the centerpiece: two end labels + a dial track with position markers. */
+/* Spectrum bar — the centerpiece: a tuning dial with two signals looking for each other. */
 
 .spectrum-bar {
   display: flex;
@@ -383,13 +469,14 @@ button:disabled {
 }
 
 .spectrum-label-en {
-  font-size: 0.85rem;
+  font-family: var(--font-display);
+  font-size: 0.86rem;
   font-weight: 600;
   color: var(--text);
 }
 
 .spectrum-label-th {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 500;
   color: var(--text-muted);
 }
@@ -400,6 +487,7 @@ button:disabled {
   margin: 0.5rem 0 0.25rem;
 }
 
+/* A dense tick texture behind the track — reads like the face of a real tuning dial. */
 .spectrum-track::before {
   content: "";
   position: absolute;
@@ -409,8 +497,10 @@ button:disabled {
   height: 10px;
   transform: translateY(-50%);
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--surface-alt), var(--accent-soft) 50%, var(--surface-alt));
-  border: 1px solid var(--border);
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.14) 0 1px, transparent 1px 3.2%),
+    linear-gradient(90deg, var(--surface-alt), var(--accent-soft) 50%, var(--surface-alt));
+  border: 1px solid var(--border-strong);
 }
 
 .spectrum-marker {
@@ -425,7 +515,7 @@ button:disabled {
 
 .marker-target {
   background: var(--target);
-  box-shadow: 0 0 0 4px var(--target-soft), 0 0 18px rgba(255, 209, 102, 0.5);
+  box-shadow: 0 0 0 4px var(--target-soft), 0 0 18px rgba(140, 123, 255, 0.55);
 }
 
 .marker-pointer {
@@ -436,7 +526,13 @@ button:disabled {
 
 .marker-pointer.marker-locked {
   background: var(--win);
-  box-shadow: 0 0 0 4px var(--win-soft), 0 0 18px rgba(76, 217, 160, 0.45);
+  box-shadow: 0 0 0 4px var(--win-soft), 0 0 18px rgba(52, 211, 153, 0.5);
+}
+
+/* Signal lock: when a locked guess sits in the same track as the revealed target, let their
+   glows bleed together — a pure-CSS "signals converging" moment, no JS required. */
+.spectrum-track:has(.marker-target):has(.marker-locked) {
+  filter: drop-shadow(0 0 14px rgba(140, 123, 255, 0.25));
 }
 
 .spectrum-scale {
@@ -447,10 +543,10 @@ button:disabled {
 }
 
 .spectrum-scale-tick {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-faint);
   width: 1.2em;
   text-align: center;
 }
@@ -460,34 +556,35 @@ button:disabled {
   bottom: 135%;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   white-space: nowrap;
   color: var(--text-muted);
 }
 
 .marker-target .spectrum-marker-label {
   color: var(--target);
-  border-color: rgba(255, 209, 102, 0.4);
+  border-color: rgba(140, 123, 255, 0.45);
 }
 
 .marker-pointer .spectrum-marker-label {
   color: var(--accent);
-  border-color: rgba(255, 122, 69, 0.4);
+  border-color: rgba(255, 176, 63, 0.4);
 }
 
 .marker-locked .spectrum-marker-label {
   color: var(--win);
-  border-color: rgba(76, 217, 160, 0.4);
+  border-color: rgba(52, 211, 153, 0.4);
 }
 
-/* Dial slider — custom range input styling so it reads as a tactile tuner, not a default input */
+/* Dial slider — a tuning knob track, not a default browser range input */
 
 .dial-slider {
   -webkit-appearance: none;
@@ -495,8 +592,10 @@ button:disabled {
   width: 100%;
   height: 12px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--surface-alt), var(--accent-soft) 50%, var(--surface-alt));
-  border: 1px solid var(--border);
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.14) 0 1px, transparent 1px 3.2%),
+    linear-gradient(90deg, var(--surface-alt), var(--accent-soft) 50%, var(--surface-alt));
+  border: 1px solid var(--border-strong);
   margin: 0.75rem 0;
   outline: none;
 }
@@ -566,8 +665,8 @@ button:disabled {
 }
 
 .minigame-score {
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  font-weight: 700;
   color: var(--accent);
   font-size: 1rem;
 }
@@ -576,8 +675,8 @@ button:disabled {
   position: relative;
   height: 160px;
   background: var(--surface-alt);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -586,7 +685,7 @@ button:disabled {
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, var(--accent), var(--target));
   border: none;
-  box-shadow: 0 0 12px rgba(255, 122, 69, 0.5);
+  box-shadow: 0 0 12px rgba(140, 123, 255, 0.45);
   padding: 0;
   cursor: pointer;
   animation: bubble-in 0.15s ease;
@@ -618,8 +717,9 @@ button:disabled {
 
 .summary-total {
   text-align: center;
-  font-size: 3rem;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   margin: 0.25rem 0 0;
   color: var(--accent);
@@ -643,8 +743,8 @@ button:disabled {
 
 .summary-round-row {
   background: var(--surface-alt);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   padding: 0.6rem 0.85rem;
   font-size: 0.82rem;
   color: var(--text-muted);
@@ -656,15 +756,15 @@ button:disabled {
   bottom: 1.25rem;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
   color: var(--text);
   padding: 0.65rem 1.1rem;
-  border-radius: 10px;
+  border-radius: var(--radius);
   font-size: 0.9rem;
   max-width: 90vw;
   text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .toast-error {
