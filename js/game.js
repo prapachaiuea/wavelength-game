@@ -74,7 +74,9 @@ async function advanceRound(roomId) {
     Object.keys(players || {}).forEach((uid) => {
       updates[`wavelength/${roomId}/guesses/${uid}`] = uid === clueGiverUid
         ? null // clears any leftover guess from a round where this player was a guesser
-        : { position: Math.floor(POSITION_MAX / 2), locked: false };
+        : { position: Math.floor(POSITION_MAX / 2) };
+      // Same per-child-only reasoning as `guesses` — `locks` has no parent-level write rule.
+      updates[`wavelength/${roomId}/locks/${uid}`] = null;
     });
   } else {
     Object.keys(players || {}).forEach((uid) => {
@@ -189,10 +191,11 @@ export async function backToLobby(roomId) {
   for (let n = 1; n <= (pub.roundNumber || 0); n++) {
     updates[`wavelength/${roomId}/rounds/${n}`] = null;
   }
-  // See the comment in advanceRound() — `guesses` has no parent-level write rule, so it must
-  // be cleared per-uid, not by nulling the whole node at once.
+  // See the comment in advanceRound() — `guesses`/`locks` have no parent-level write rule, so
+  // they must be cleared per-uid, not by nulling the whole node at once.
   Object.keys(players || {}).forEach((uid) => {
     updates[`wavelength/${roomId}/guesses/${uid}`] = null;
+    updates[`wavelength/${roomId}/locks/${uid}`] = null;
   });
   updates[`wavelength/${roomId}/public/clue`] = null;
   updates[`wavelength/${roomId}/public/clueGiverUid`] = null;

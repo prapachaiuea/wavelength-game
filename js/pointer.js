@@ -1,4 +1,4 @@
-import { ref, update } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+import { ref, set, update } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 import { db } from "./firebase-init.js";
 import { getState } from "./state.js";
 import { showToast } from "./ui/components.js";
@@ -88,5 +88,5 @@ export function endMyGuessDrag(roomId, position) {
 
 export async function lockMyGuess(roomId) {
   const { uid } = getState();
-  await update(ref(db, `wavelength/${roomId}/guesses/${uid}`), { locked: true });
+  await set(ref(db, `wavelength/${roomId}/locks/${uid}`), true);
 }

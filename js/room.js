@@ -125,7 +125,7 @@ export async function leaveRoom() {
     players: {},
     mySecret: null,
     myGuess: null,
-    allGuesses: {},
+    locks: {},
     rounds: {},
   });
 }
@@ -190,18 +190,20 @@ export function subscribeToRoom(roomId) {
     setState({ rounds: snap.val() || {} });
   }, ignoreDenied));
 
-  // Competitive mode only — my own private guess for the current round. Denied by rules once
-  // the round moves on and I'm not the reader anymore is not a case that arises here (self-read
-  // is always allowed); this is just empty/null outside competitive mode or before a guess exists.
+  // Competitive mode only — my own private guess (position) for the current round. Denied by
+  // rules once the round moves on and I'm not the reader anymore is not a case that arises here
+  // (self-read is always allowed); this is just empty/null outside competitive mode or before a
+  // guess exists.
   unsubscribers.push(onValue(ref(db, `wavelength/${roomId}/guesses/${uid}`), (snap) => {
     setState({ myGuess: snap.val() || null });
   }, ignoreDenied));
 
-  // Aggregate view of everyone's guesses — only readable by the host or the current clue-giver
-  // (or by anyone once phase is round-reveal), so this resolves to permission-denied and stays
-  // empty for ordinary guessers, which is intentional: it's what lets the clue-giver see real
-  // "X of Y locked in" progress instead of a static guess.
-  unsubscribers.push(onValue(ref(db, `wavelength/${roomId}/guesses`), (snap) => {
-    setState({ allGuesses: snap.val() || {} });
-  }, ignoreDenied));
+  // Bulk "who's locked in" view — deliberately a separate top-level node from `guesses` (which
+  // holds each guesser's actual position) rather than a `locked` field inside it, because a
+  // bulk read of `guesses` would have to expose everyone's positions to everyone just to learn
+  // who's locked, defeating the point of guessing independently. `locks` only ever holds
+  // booleans, so it's safe for every room member to bulk-read.
+  unsubscribers.push(onValue(ref(db, `wavelength/${roomId}/locks`), (snap) => {
+    setState({ locks: snap.val() || {} });
+  }));
 }

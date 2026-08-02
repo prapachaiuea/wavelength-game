@@ -49,12 +49,13 @@
         },
         "guesses": {
           "$uid": {
-            "locked": {
-              ".read": "auth != null && root.child('wavelength').child($roomId).child('players').child(auth.uid).exists()"
-            },
-            "position": {
-              ".read": "auth != null && (auth.uid === $uid || auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() || root.child('wavelength').child($roomId).child('public/phase').val() === 'round-reveal')"
-            },
+            ".read": "auth != null && (auth.uid === $uid || auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || auth.uid === root.child('wavelength').child($roomId).child('public/clueGiverUid').val() || root.child('wavelength').child($roomId).child('public/phase').val() === 'round-reveal')",
+            ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (auth.uid === $uid && auth.uid !== root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && root.child('wavelength').child($roomId).child('public/phase').val() === 'guessing' && root.child('wavelength').child($roomId).child('public/mode').val() === 'competitive'))"
+          }
+        },
+        "locks": {
+          ".read": "auth != null && root.child('wavelength').child($roomId).child('players').child(auth.uid).exists()",
+          "$uid": {
             ".write": "auth != null && (auth.uid === root.child('wavelength').child($roomId).child('public/host').val() || (auth.uid === $uid && auth.uid !== root.child('wavelength').child($roomId).child('public/clueGiverUid').val() && root.child('wavelength').child($roomId).child('public/phase').val() === 'guessing' && root.child('wavelength').child($roomId).child('public/mode').val() === 'competitive'))"
           }
         },

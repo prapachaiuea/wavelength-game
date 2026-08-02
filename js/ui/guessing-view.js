@@ -96,13 +96,15 @@ export function render(state) {
   document.getElementById("guessing-clue-text").textContent = pub.clue || "";
 
   if (isCompetitive) {
-    const myGuess = state.myGuess || { position: 500, locked: false };
+    const myGuess = state.myGuess || { position: 500 };
+    const myLocked = Boolean(state.locks?.[state.uid]);
     // Computed regardless of viewer role (not just inside the isClueGiver branch below) since
     // the reveal-gating logic further down needs it even when the host is watching but isn't
-    // this round's clue-giver. "locked" is readable by any room member (see firebase-rules.json)
-    // so this listener never goes stale/permission-denied the way it briefly did before.
+    // this round's clue-giver. `locks` is a separate bulk-readable-by-anyone node (booleans
+    // only, no positions) precisely so this can be computed without exposing every guesser's
+    // actual guess to each other — see the comment in room.js's subscribeToRoom().
     const guesserUids = Object.keys(state.players || {}).filter((uid) => uid !== pub.clueGiverUid);
-    const lockedCount = guesserUids.filter((uid) => state.allGuesses?.[uid]?.locked).length;
+    const lockedCount = guesserUids.filter((uid) => state.locks?.[uid]).length;
     const allLocked = guesserUids.length > 0 && lockedCount === guesserUids.length;
 
     const markers = [];
@@ -111,8 +113,8 @@ export function render(state) {
     } else if (!isClueGiver) {
       markers.push({
         position: myGuess.position,
-        className: myGuess.locked ? "marker-pointer marker-locked" : "marker-pointer",
-        label: myGuess.locked ? "Locked" : "You",
+        className: myLocked ? "marker-pointer marker-locked" : "marker-pointer",
+        label: myLocked ? "Locked" : "You",
       });
     }
     renderSpectrumBar(barEl, { left: spectrum.left, right: spectrum.right, markers });
@@ -129,9 +131,9 @@ export function render(state) {
     } else {
       guesserControls.hidden = false;
       waitingBlock.hidden = true;
-      slider.disabled = myGuess.locked;
-      btnLock.disabled = myGuess.locked;
-      btnLock.textContent = myGuess.locked ? "Locked In — waiting for others" : "Lock In Guess";
+      slider.disabled = myLocked;
+      btnLock.disabled = myLocked;
+      btnLock.textContent = myLocked ? "Locked In — waiting for others" : "Lock In Guess";
     }
 
     // Reveal only becomes clickable once every guesser has actually locked in — previously the
@@ -170,7 +172,10 @@ export function render(state) {
       btnLock.textContent = pointer.locked ? "Locked In" : "Lock In Guess";
     }
 
-    btnReveal.hidden = !(pointer.locked && (isClueGiver || state.isHost));
+    // Cooperative mode's shared dial can only be revealed by the clue-giver — the host is a
+    // distinct concept from "who's up this round" and shouldn't get an extra reveal control
+    // just because they happen to also be in the room (matches competitive mode's gating below).
+    btnReveal.hidden = !(pointer.locked && isClueGiver);
     if (!revealInFlight) btnReveal.disabled = false;
   }
 }
