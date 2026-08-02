@@ -43,7 +43,7 @@
         },
         "reveal": {
           "insiderUid": {
-            ".read": "auth != null && (auth.uid === root.child('rooms').child($roomId).child('public/host').val() || (root.child('rooms').child($roomId).child('public/phase').val() === 'results' && root.child('rooms').child($roomId).child('players').child(auth.uid).exists()))",
+            ".read": "auth != null && root.child('rooms').child($roomId).child('public/phase').val() === 'results' && root.child('rooms').child($roomId).child('players').child(auth.uid).exists()",
             ".write": "auth != null && auth.uid === root.child('rooms').child($roomId).child('public/host').val()"
           }
         },
