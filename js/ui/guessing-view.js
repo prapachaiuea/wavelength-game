@@ -97,6 +97,13 @@ export function render(state) {
 
   if (isCompetitive) {
     const myGuess = state.myGuess || { position: 500, locked: false };
+    // Computed regardless of viewer role (not just inside the isClueGiver branch below) since
+    // the reveal-gating logic further down needs it even when the host is watching but isn't
+    // this round's clue-giver. "locked" is readable by any room member (see firebase-rules.json)
+    // so this listener never goes stale/permission-denied the way it briefly did before.
+    const guesserUids = Object.keys(state.players || {}).filter((uid) => uid !== pub.clueGiverUid);
+    const lockedCount = guesserUids.filter((uid) => state.allGuesses?.[uid]?.locked).length;
+    const allLocked = guesserUids.length > 0 && lockedCount === guesserUids.length;
 
     const markers = [];
     if (isClueGiver && state.mySecret) {
@@ -117,11 +124,6 @@ export function render(state) {
     if (isClueGiver) {
       guesserControls.hidden = true;
       waitingBlock.hidden = false;
-      // Previously a static "Everyone else is locking in..." message regardless of actual
-      // progress — the clue-giver has read access to everyone's guesses (state.allGuesses,
-      // populated by a listener only they/the host can actually read), so show real counts.
-      const guesserUids = Object.keys(state.players || {}).filter((uid) => uid !== pub.clueGiverUid);
-      const lockedCount = guesserUids.filter((uid) => state.allGuesses?.[uid]?.locked).length;
       document.getElementById("guessing-waiting-text").textContent =
         `${lockedCount} of ${guesserUids.length} locked in their guess...`;
     } else {
@@ -132,13 +134,12 @@ export function render(state) {
       btnLock.textContent = myGuess.locked ? "Locked In — waiting for others" : "Lock In Guess";
     }
 
-    // No hard gate on "everyone locked" (the clue-giver/host can reveal early if they choose —
-    // same social convention as the physical game), but the count above at least tells them
-    // the truth about how many actually have. Re-asserts disabled=false on every render unless
-    // a reveal click from THIS tab is still in flight — the single source of truth for the
-    // button's clickability, instead of leaving it wherever the last click handler left it.
+    // Reveal only becomes clickable once every guesser has actually locked in — previously the
+    // clue-giver/host could reveal early, which could skip/rush whoever hadn't finished yet.
+    // Re-evaluated fresh every render (not just once) unless a reveal click from THIS tab is
+    // still in flight — the single source of truth for the button's clickability.
     btnReveal.hidden = !(isClueGiver || state.isHost);
-    if (!revealInFlight) btnReveal.disabled = false;
+    if (!revealInFlight) btnReveal.disabled = !allLocked;
   } else {
     const pointer = pub.pointer || { position: 500, locked: false };
     const markers = [];
