@@ -97,12 +97,18 @@ export async function joinRoom(roomId, name) {
 }
 
 export async function leaveRoom() {
-  const { roomId, uid } = getState();
+  const { roomId, uid, isHost } = getState();
   if (!roomId) return;
 
   try {
     await onDisconnect(ref(db, `wavelength/${roomId}/players/${uid}/online`)).cancel();
-    await remove(ref(db, `wavelength/${roomId}/players/${uid}`));
+    if (isHost) {
+      // Rooms are one-time use — the host leaving closes it for everyone still inside,
+      // rather than leaving a headless room that other players are stuck in.
+      await remove(ref(db, `wavelength/${roomId}`));
+    } else {
+      await remove(ref(db, `wavelength/${roomId}/players/${uid}`));
+    }
   } catch {
     // Best-effort — still reset the local view even if the write fails (e.g. offline).
   }
