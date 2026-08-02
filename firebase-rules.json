@@ -2,60 +2,6 @@
   "rules": {
     ".read": false,
     ".write": false,
-    "rooms": {
-      "$roomId": {
-        ".write": "auth != null && !newData.exists() && data.child('public/createdAt').exists() && now > data.child('public/createdAt').val() + 86400000",
-        "public": {
-          ".read": "auth != null",
-          "host": {
-            ".write": "auth != null && (!data.exists() || auth.uid === data.val())"
-          },
-          "createdAt": {
-            ".write": "auth != null && !data.exists()"
-          },
-          "roundNumber": {
-            ".write": "auth != null && auth.uid === root.child('rooms').child($roomId).child('public/host').val()"
-          },
-          "roundDurationMs": {
-            ".write": "auth != null && auth.uid === root.child('rooms').child($roomId).child('public/host').val()"
-          },
-          "timer": {
-            ".write": "auth != null && auth.uid === root.child('rooms').child($roomId).child('public/host').val()"
-          },
-          "guess": {
-            ".write": "auth != null && (auth.uid === root.child('rooms').child($roomId).child('public/host').val() || (root.child('rooms').child($roomId).child('players').child(auth.uid).exists() && root.child('rooms').child($roomId).child('public/phase').val() === 'guessing'))"
-          },
-          "phase": {
-            ".write": "auth != null && (auth.uid === root.child('rooms').child($roomId).child('public/host').val() || (root.child('rooms').child($roomId).child('players').child(auth.uid).exists() && data.val() === 'guessing' && newData.val() === 'voting') || (root.child('rooms').child($roomId).child('players').child(auth.uid).exists() && data.val() === 'guessing' && newData.val() === 'results' && now >= root.child('rooms').child($roomId).child('public/timer/startAt').val() + root.child('rooms').child($roomId).child('public/timer/durationMs').val()))"
-          }
-        },
-        "players": {
-          ".read": "auth != null",
-          "$uid": {
-            ".write": "auth != null && auth.uid === $uid && (data.exists() || root.child('rooms').child($roomId).child('public/phase').val() === 'lobby')"
-          }
-        },
-        "secrets": {
-          "$uid": {
-            ".read": "auth != null && (auth.uid === $uid || auth.uid === root.child('rooms').child($roomId).child('public/host').val())",
-            ".write": "auth != null && auth.uid === root.child('rooms').child($roomId).child('public/host').val()"
-          }
-        },
-        "reveal": {
-          "insiderUid": {
-            ".read": "auth != null && root.child('rooms').child($roomId).child('public/phase').val() === 'results' && root.child('rooms').child($roomId).child('players').child(auth.uid).exists()",
-            ".write": "auth != null && auth.uid === root.child('rooms').child($roomId).child('public/host').val()"
-          }
-        },
-        "votes": {
-          ".read": "auth != null && root.child('rooms').child($roomId).child('players').child(auth.uid).exists()",
-          "$uid": {
-            ".read": "auth != null && (auth.uid === $uid || auth.uid === root.child('rooms').child($roomId).child('public/host').val() || root.child('rooms').child($roomId).child('public/phase').val() === 'results')",
-            ".write": "auth != null && (auth.uid === root.child('rooms').child($roomId).child('public/host').val() || (auth.uid === $uid && root.child('rooms').child($roomId).child('public/phase').val() === 'voting' && root.child('rooms').child($roomId).child('secrets').child(auth.uid).child('role').val() !== 'master' && newData.child('votedFor').exists() && root.child('rooms').child($roomId).child('players').child(newData.child('votedFor').val()).exists()))"
-          }
-        }
-      }
-    },
     "wavelength": {
       "$roomId": {
         ".write": "auth != null && !newData.exists() && (auth.uid === data.child('public/host').val() || (data.child('public/createdAt').exists() && now > data.child('public/createdAt').val() + 86400000))",
