@@ -404,6 +404,10 @@ button:disabled {
   gap: 0.4rem;
 }
 
+.leaderboard-list[hidden] {
+  display: none;
+}
+
 .leaderboard-row {
   counter-increment: rank;
   display: flex;
@@ -697,6 +701,10 @@ button:disabled {
   align-items: center;
   gap: 0.6rem;
   padding: 1rem 0;
+}
+
+.waiting-block[hidden] {
+  display: none;
 }
 
 .minigame {

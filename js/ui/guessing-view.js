@@ -136,11 +136,12 @@ export function render(state) {
       btnLock.textContent = myLocked ? "Locked In — waiting for others" : "Lock In Guess";
     }
 
-    // Reveal only becomes clickable once every guesser has actually locked in — previously the
-    // clue-giver/host could reveal early, which could skip/rush whoever hadn't finished yet.
+    // Reveal is the clue-giver's call, same as cooperative mode — the host is a distinct
+    // concept from "who's up this round" and shouldn't get a reveal control on a round that
+    // isn't theirs. Only becomes clickable once every guesser has actually locked in.
     // Re-evaluated fresh every render (not just once) unless a reveal click from THIS tab is
     // still in flight — the single source of truth for the button's clickability.
-    btnReveal.hidden = !(isClueGiver || state.isHost);
+    btnReveal.hidden = !isClueGiver;
     if (!revealInFlight) btnReveal.disabled = !allLocked;
   } else {
     const pointer = pub.pointer || { position: 500, locked: false };
